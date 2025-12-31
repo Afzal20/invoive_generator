@@ -8,6 +8,7 @@ import {
 import { createClient } from "@/lib/supabase/server"
 
 import { Suspense } from "react"
+import { redirect } from "next/navigation"
 
 async function AppSidebarWithUser() {
   const supabase = await createClient()
@@ -18,7 +19,18 @@ async function AppSidebarWithUser() {
   return <AppSidebar user={user} />
 }
 
-export default function Page() {
+export default async function Page() {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return (
+      redirect('/')
+    )
+  }
+
   return (
     <SidebarProvider>
       <Suspense fallback={<AppSidebar />}>

@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { FieldDescription, FieldSeparator } from "./ui/field";
 
 export function LoginForm({
   className,
@@ -133,19 +134,20 @@ export function LoginForm({
                 </div>
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button
+                type="submit"
+                disabled={isLoading}
+                variant="login"
+                className="
+                      w-full
+                      disabled:opacity-50
+                      disabled:pointer-events-none"
+              >
                 {isLoading ? "Logging in..." : "Login"}
               </Button>
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">
-                    Or continue with
-                  </span>
-                </div>
-              </div>
+              <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
+                Or continue with
+              </FieldSeparator>
               <Button
                 type="button"
                 variant="outline"
@@ -186,6 +188,10 @@ export function LoginForm({
           </form>
         </CardContent>
       </Card>
+      <FieldDescription className="px-6 text-center">
+        By clicking continue, you agree to our <a href="/terms">Terms of Service</a>{" "}
+        and <a href="/privacy">Privacy Policy</a>.
+      </FieldDescription>
     </div>
   );
 }

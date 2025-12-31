@@ -58,6 +58,7 @@
     --shadow-xl: var(--shadow-xl);
     --shadow-2xl: var(--shadow-2xl);
   }
+
   body {
     letter-spacing: var(--tracking-normal);
   }
@@ -254,7 +255,7 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
 
   body {

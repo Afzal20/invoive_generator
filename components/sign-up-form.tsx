@@ -160,7 +160,7 @@ export function SignUpForm({
                 </div>
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full" disabled={isLoading} variant="login">
                 {isLoading ? "Creating an account..." : "Sign up"}
               </Button>
               <div className="relative">
@@ -168,7 +168,7 @@ export function SignUpForm({
                   <span className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">
+                  <span className="bg-card px-2 text-muted-foreground">
                     Or continue with
                   </span>
                 </div>
@@ -215,12 +215,12 @@ export function SignUpForm({
 }
 
 
-export  function password_input() {
+export function password_input() {
   return (<Input
     id="password"
     type="password"
     required
-    // value and onChange would be managed by the parent component
+  // value and onChange would be managed by the parent component
   />
   );
 };
