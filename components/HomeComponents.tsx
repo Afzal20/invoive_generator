@@ -1,7 +1,7 @@
-
+import Navbar from "./navbar"
 
 export default function HomeComponents() {
   return (
-    <div>page</div>
+    <Navbar />
   )
 }

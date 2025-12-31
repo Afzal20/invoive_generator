@@ -1,0 +1,33 @@
+"use client";
+
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
+import Link from "next/link";
+import { ComponentProps } from "react";
+
+const menuItems = [
+  { title: "Home", href: "/" },
+  { title: "About", href: "/about" },
+  { title: "Features", href: "/features" },
+  { title: "Contact", href: "/contact" },
+  { title: "Pricing", href: "/pricing" },
+];
+
+export const NavMenu = (props: ComponentProps<typeof NavigationMenu>) => (
+  <NavigationMenu {...props}>
+    <NavigationMenuList className="space-x-0 data-[orientation=vertical]:flex-col data-[orientation=vertical]:items-start data-[orientation=vertical]:justify-start">
+      {menuItems.map((item) => (
+        <NavigationMenuItem key={item.href}>
+          <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+            <Link href={item.href}>{item.title}</Link>
+          </NavigationMenuLink>
+        </NavigationMenuItem>
+      ))}
+    </NavigationMenuList>
+  </NavigationMenu>
+);
