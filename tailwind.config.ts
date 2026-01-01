@@ -67,6 +67,65 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      animation: {
+        'rainbow-border': 'rainbow-border 3s linear infinite',
+        'gradient-x': 'gradient-x 3s ease infinite',
+        'gradient-flow': 'gradient-flow 3s ease infinite',
+        'scan': 'scan 2s linear infinite',
+        'pulse-rgb': 'pulse-rgb 2s ease-in-out infinite',
+      },
+      keyframes: {
+        'rainbow-border': {
+          '0%, 100%': { 
+            borderColor: 'rgb(255, 0, 0) rgb(0, 255, 0) rgb(0, 0, 255) rgb(255, 255, 0)' 
+          },
+          '25%': { 
+            borderColor: 'rgb(0, 255, 0) rgb(0, 0, 255) rgb(255, 255, 0) rgb(255, 0, 0)' 
+          },
+          '50%': { 
+            borderColor: 'rgb(0, 0, 255) rgb(255, 255, 0) rgb(255, 0, 0) rgb(0, 255, 0)' 
+          },
+          '75%': { 
+            borderColor: 'rgb(255, 255, 0) rgb(255, 0, 0) rgb(0, 255, 0) rgb(0, 0, 255)' 
+          },
+        },
+        'gradient-x': {
+          '0%, 100%': {
+            'background-size': '200% 200%',
+            'background-position': 'left center'
+          },
+          '50%': {
+            'background-size': '200% 200%',
+            'background-position': 'right center'
+          }
+        },
+        'gradient-flow': {
+          '0%': { 'background-position': '0% 50%' },
+          '50%': { 'background-position': '100% 50%' },
+          '100%': { 'background-position': '0% 50%' }
+        },
+        'scan': {
+          '0%': { 'background-position': '-100% 0' },
+          '100%': { 'background-position': '200% 0' }
+        },
+        'pulse-rgb': {
+          '0%, 100%': {
+            'box-shadow': '0 0 20px rgba(255, 0, 0, 0.5)',
+            'border-color': 'rgb(255, 0, 0)'
+          },
+          '33%': {
+            'box-shadow': '0 0 20px rgba(0, 255, 0, 0.5)',
+            'border-color': 'rgb(0, 255, 0)'
+          },
+          '66%': {
+            'box-shadow': '0 0 20px rgba(0, 0, 255, 0.5)',
+            'border-color': 'rgb(0, 0, 255)'
+          },
+        }
+      },
+      backgroundSize: {
+        'gradient-flow': '200% 200%',
+      }
     },
   },
   plugins: [require("tailwindcss-animate")],

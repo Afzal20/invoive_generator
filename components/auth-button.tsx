@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import HomeComponents from "@/components/HomeComponents";
 
 export async function AuthButton() {
   const supabase = await createClient();
@@ -11,13 +10,5 @@ export async function AuthButton() {
 
   if (user) {
     return redirect("/dashboard");
-  }
-
-  else {
-    return (
-      <>
-        <HomeComponents />
-      </>
-    )
   }
 }

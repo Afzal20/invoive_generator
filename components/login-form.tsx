@@ -33,7 +33,7 @@ export function LoginForm({
     if (showPassword) {
       const timer = setTimeout(() => {
         setShowPassword(false);
-      }, 5000);
+      }, 3000);
       return () => clearTimeout(timer);
     }
   }, [showPassword]);
@@ -118,6 +118,7 @@ export function LoginForm({
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••••"
                     className="pr-10"
                   />
                   <button
