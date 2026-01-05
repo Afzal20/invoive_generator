@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { FieldDescription } from "./ui/field";
 
 export function SignUpForm({
   className,
@@ -210,6 +211,10 @@ export function SignUpForm({
           </form>
         </CardContent>
       </Card>
+      <FieldDescription className="px-6 text-center">
+        By clicking continue, you agree to our <a href="/terms">Terms of Service</a>{" "}
+        and <a href="/privacy">Privacy Policy</a>.
+      </FieldDescription>
     </div>
   );
 }

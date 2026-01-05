@@ -74,7 +74,7 @@ export function InvoicePreview() {
                             </div>
 
                             <div className="mt-8 pt-6 border-t border-gray-200">
-                                <p className="text-xs text-gray-500">Thank you for your business!</p>
+                                <p className="text-xs text-gray-500">Thank you!</p>
                             </div>
                         </div>
                     </div>
