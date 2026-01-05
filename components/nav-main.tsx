@@ -1,6 +1,13 @@
 "use client"
 
-import { ChevronRight, type LucideIcon } from "lucide-react"
+import {
+  Bot,
+  BookOpen,
+  ChevronRight,
+  Settings2,
+  SquareTerminal,
+  type LucideIcon,
+} from "lucide-react"
 
 import {
   Collapsible,
@@ -18,13 +25,22 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
 
+const iconComponents = {
+  "square-terminal": SquareTerminal,
+  bot: Bot,
+  "book-open": BookOpen,
+  "settings-2": Settings2,
+} as const
+
+type IconKey = keyof typeof iconComponents
+
 export function NavMain({
   items,
 }: {
   items: {
     title: string
     url: string
-    icon?: LucideIcon
+    icon?: LucideIcon | IconKey
     isActive?: boolean
     items?: {
       title: string
@@ -46,7 +62,13 @@ export function NavMain({
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
                 <SidebarMenuButton tooltip={item.title}>
-                  {item.icon && <item.icon />}
+                  {(() => {
+                    if (!item.icon) return null
+                    const Icon = typeof item.icon === "string"
+                      ? iconComponents[item.icon]
+                      : item.icon
+                    return Icon ? <Icon /> : null
+                  })()}
                   <span>{item.title}</span>
                   <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                 </SidebarMenuButton>

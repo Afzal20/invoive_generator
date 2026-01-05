@@ -2,6 +2,9 @@ import Link from "next/link";
 import { RainbowButton } from "@/components/ui/rainbow-button"
 import { Button } from "@/components/ui/button";
 import { InvoicePreview } from "./home/Invoice-preview";
+import { FeaturesSection } from "./home/features-section";
+
+import { CallToAction, HeroSection, Values } from "./home/about-section";
 
 export default function HomeComponents() {
   return (
@@ -95,6 +98,13 @@ export default function HomeComponents() {
           </Button>
         </div>
       </div>
+      <FeaturesSection />
+      {/* Hero Section */}
+      <HeroSection/>
+      {/* Mission & Values */}
+      <Values/>
+      {/* CTA Section */}
+      <CallToAction/>
     </>
   )
 }

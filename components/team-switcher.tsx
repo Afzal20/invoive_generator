@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ChevronsUpDown, Plus } from "lucide-react"
+import { ChevronsUpDown, Plus, GalleryVerticalEnd } from "lucide-react"
 
 import {
   DropdownMenu,
@@ -19,12 +19,22 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
+const teamLogos = {
+  "gallery-vertical-end": GalleryVerticalEnd,
+} as const
+
+type TeamLogoKey = keyof typeof teamLogos
+
+function isTeamLogoKey(value: unknown): value is TeamLogoKey {
+  return typeof value === "string" && value in teamLogos
+}
+
 export function TeamSwitcher({
   teams,
 }: {
   teams: {
     name: string
-    logo: React.ElementType
+    logo: React.ElementType | TeamLogoKey
     plan: string
   }[]
 }) {
@@ -34,6 +44,12 @@ export function TeamSwitcher({
   if (!activeTeam) {
     return null
   }
+
+  const ActiveLogo = isTeamLogoKey(activeTeam.logo)
+    ? teamLogos[activeTeam.logo]
+    : typeof activeTeam.logo === "string"
+      ? GalleryVerticalEnd
+      : activeTeam.logo
 
   return (
     <SidebarMenu>
@@ -45,7 +61,7 @@ export function TeamSwitcher({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                <activeTeam.logo className="size-4" />
+                {ActiveLogo && <ActiveLogo className="size-4" />}
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{activeTeam.name}</span>
@@ -63,19 +79,27 @@ export function TeamSwitcher({
             <DropdownMenuLabel className="text-muted-foreground text-xs">
               Teams
             </DropdownMenuLabel>
-            {teams.map((team, index) => (
-              <DropdownMenuItem
-                key={team.name}
-                onClick={() => setActiveTeam(team)}
-                className="gap-2 p-2"
-              >
-                <div className="flex size-6 items-center justify-center rounded-md border">
-                  <team.logo className="size-3.5 shrink-0" />
-                </div>
-                {team.name}
-                <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
-              </DropdownMenuItem>
-            ))}
+            {teams.map((team, index) => {
+              const TeamLogo = isTeamLogoKey(team.logo)
+                ? teamLogos[team.logo]
+                : typeof team.logo === "string"
+                  ? GalleryVerticalEnd
+                  : team.logo
+
+              return (
+                <DropdownMenuItem
+                  key={team.name}
+                  onClick={() => setActiveTeam(team)}
+                  className="gap-2 p-2"
+                >
+                  <div className="flex size-6 items-center justify-center rounded-md border">
+                    {TeamLogo && <TeamLogo className="size-3.5 shrink-0" />}
+                  </div>
+                  {team.name}
+                  <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
+                </DropdownMenuItem>
+              )
+            })}
             <DropdownMenuSeparator />
             <DropdownMenuItem className="gap-2 p-2">
               <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">

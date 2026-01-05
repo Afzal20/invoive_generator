@@ -3,7 +3,10 @@
 import {
   Folder,
   Forward,
+  Frame,
+  Map,
   MoreHorizontal,
+  PieChart,
   Trash2,
   type LucideIcon,
 } from "lucide-react"
@@ -25,13 +28,21 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
+const projectIcons = {
+  frame: Frame,
+  "pie-chart": PieChart,
+  map: Map,
+} as const
+
+type ProjectIconKey = keyof typeof projectIcons
+
 export function NavProjects({
   projects,
 }: {
   projects: {
     name: string
     url: string
-    icon: LucideIcon
+    icon: LucideIcon | ProjectIconKey
   }[]
 }) {
   const { isMobile } = useSidebar()
@@ -44,7 +55,13 @@ export function NavProjects({
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton asChild>
               <a href={item.url}>
-                <item.icon />
+                {(() => {
+                  const Icon =
+                    typeof item.icon === "string"
+                      ? projectIcons[item.icon]
+                      : item.icon
+                  return Icon ? <Icon /> : null
+                })()}
                 <span>{item.name}</span>
               </a>
             </SidebarMenuButton>

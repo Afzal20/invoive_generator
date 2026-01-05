@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Mail, MessageSquare, Phone, MapPin, Clock } from "lucide-react";
+import { Mail, MessageSquare, Phone, MapPin, Clock, LucideSignal } from "lucide-react";
 import { useState } from "react";
 
 export default function ContactsPage() {
@@ -127,9 +127,8 @@ export default function ContactsPage() {
                                         <Mail className="h-5 w-5 text-indigo-600" />
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold mb-1">Email Us</h3>
-                                        <p className="text-sm text-gray-600">support@invoicegen.com</p>
-                                        <p className="text-sm text-gray-600">sales@invoicegen.com</p>
+                                        <h3 className="font-semibold mb-1">Email me</h3>
+                                        <p className="text-sm text-gray-600">afzalhossen2019@.com</p>
                                     </div>
                                 </div>
 
@@ -138,23 +137,9 @@ export default function ContactsPage() {
                                         <Phone className="h-5 w-5 text-purple-600" />
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold mb-1">Call Us</h3>
-                                        <p className="text-sm text-gray-600">+1 (555) 123-4567</p>
-                                        <p className="text-sm text-gray-600">Mon-Fri, 9am-6pm EST</p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-start gap-4 mb-6">
-                                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center shrink-0">
-                                        <MapPin className="h-5 w-5 text-green-600" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-semibold mb-1">Visit Us</h3>
-                                        <p className="text-sm text-gray-600">
-                                            123 Business Street<br />
-                                            San Francisco, CA 94105<br />
-                                            United States
-                                        </p>
+                                        <h3 className="font-semibold mb-1">Whatsapp</h3>
+                                        <p className="text-sm text-gray-600">+880 1771932019</p>
+                                        <p className="text-sm text-gray-600">Just Message your Problem and details with your user Name or email</p>
                                     </div>
                                 </div>
 
@@ -165,9 +150,9 @@ export default function ContactsPage() {
                                     <div>
                                         <h3 className="font-semibold mb-1">Business Hours</h3>
                                         <p className="text-sm text-gray-600">
-                                            Monday - Friday: 9am - 6pm<br />
-                                            Saturday: 10am - 4pm<br />
-                                            Sunday: Closed
+                                            Sunday-Wednesday , 9am-6pm EST<br />
+                                            Thurstday: 11am - 2pm<br />
+                                            Friday: Closed
                                         </p>
                                     </div>
                                 </div>

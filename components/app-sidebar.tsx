@@ -1,24 +1,8 @@
-"use client"
-
-import * as React from "react"
-import {
-  AudioWaveform,
-  BookOpen,
-  Bot,
-  Command,
-  Frame,
-  GalleryVerticalEnd,
-  Map,
-  PieChart,
-  Settings2,
-  SquareTerminal,
-} from "lucide-react"
-
 import { NavMain } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
 import { NavUser } from "@/components/nav-user"
 import { TeamSwitcher } from "@/components/team-switcher"
-import { ComponentProps } from "react"
+import type { ComponentProps } from "react"
 import {
   Sidebar,
   SidebarContent,
@@ -27,13 +11,22 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { User } from "@supabase/supabase-js"
+import { createClient } from "@/lib/supabase/server";
+
+type Team = Parameters<typeof TeamSwitcher>[0]["teams"][number]
+type NavMainItem = Parameters<typeof NavMain>[0]["items"][number]
+type Project = Parameters<typeof NavProjects>[0]["projects"][number]
 
 // This is sample data.
-const data = {
+const data: {
+  teams: Team[]
+  navMain: NavMainItem[]
+  projects: Project[]
+} = {
   teams: [
     {
       name: "Primary Organization",
-      logo: GalleryVerticalEnd,
+      logo: "gallery-vertical-end",
       plan: "Enterprise",
     },
   ],
@@ -41,7 +34,7 @@ const data = {
     {
       title: "Clients",
       url: "/invoices/{id}",
-      icon: SquareTerminal,
+      icon: "square-terminal",
       isActive: true,
       items: [
         {
@@ -61,7 +54,7 @@ const data = {
     {
       title: "Products",
       url: "#",
-      icon: Bot,
+      icon: "bot",
       items: [
         {
           title: "Genesis",
@@ -80,7 +73,7 @@ const data = {
     {
       title: "Invoices",
       url: "#",
-      icon: BookOpen,
+      icon: "book-open",
       items: [
         {
           title: "Introduction",
@@ -103,7 +96,7 @@ const data = {
     {
       title: "Settings",
       url: "#",
-      icon: Settings2,
+      icon: "settings-2",
       items: [
         {
           title: "General",
@@ -128,17 +121,17 @@ const data = {
     {
       name: "Design Engineering",
       url: "#",
-      icon: Frame,
+      icon: "frame",
     },
     {
       name: "Sales & Marketing",
       url: "#",
-      icon: PieChart,
+      icon: "pie-chart",
     },
     {
       name: "Travel",
       url: "#",
-      icon: Map,
+      icon: "map",
     },
   ],
 }
@@ -147,11 +140,14 @@ interface AppSidebarProps extends ComponentProps<typeof Sidebar> {
   user?: User | null
 }
 
-export function AppSidebar({ user, ...props }: AppSidebarProps) {
+export async function AppSidebar({ user, ...props }: AppSidebarProps) {
+  const supabase = await createClient();
+  const { data: { user: currentUser } } = await supabase.auth.getUser();
+
   const userData = {
-    name: user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User",
-    email: user?.email || "",
-    avatar: user?.user_metadata?.avatar_url || "/avatars/shadcn.jpg",
+    name: currentUser?.user_metadata?.full_name || currentUser?.email?.split("@")[0] || "User",
+    email: currentUser?.email || "",
+    avatar: currentUser?.user_metadata?.avatar_url || "/avatars/shadcn.jpg",
   }
 
   return (

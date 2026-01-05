@@ -12,8 +12,6 @@ import { ComponentProps } from "react";
 
 const menuItems = [
   { title: "Home", href: "/" },
-  { title: "About", href: "/about" },
-  { title: "Features", href: "/features" },
   { title: "Contact", href: "/contact" },
   { title: "Pricing", href: "/pricing" },
 ];
