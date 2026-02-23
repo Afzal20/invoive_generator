@@ -47,37 +47,37 @@ export function PricingComparison() {
   const renderCell = (value: string | boolean | number) => {
     if (typeof value === "boolean") {
       return value ? (
-        <Check className="h-5 w-5 text-green-500 mx-auto" />
+        <Check className="h-5 w-5 text-green-300 mx-auto" />
       ) : (
-        <X className="h-5 w-5 text-gray-300 mx-auto" />
+        <X className="h-5 w-5 text-white/30 mx-auto" />
       );
     }
-    return <span className="text-sm text-gray-700">{value}</span>;
+    return <span className="text-sm text-white/90">{value}</span>;
   };
 
   return (
-    <Card className="w-full max-w-5xl mx-auto">
+    <Card className="w-full max-w-5xl mx-auto bg-white/10 backdrop-blur-md border-white/20 text-white">
       <CardHeader>
-        <CardTitle className="text-2xl text-center">Compare All Features</CardTitle>
+        <CardTitle className="text-2xl text-center text-white">Compare All Features</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b">
-                <th className="text-left py-4 px-4 font-semibold">Features</th>
-                <th className="text-center py-4 px-4 font-semibold">Free</th>
-                <th className="text-center py-4 px-4 font-semibold bg-indigo-50">Pro</th>
-                <th className="text-center py-4 px-4 font-semibold">Business</th>
+              <tr className="border-b border-white/10">
+                <th className="text-left py-4 px-4 font-semibold text-white">Features</th>
+                <th className="text-center py-4 px-4 font-semibold text-white">Free</th>
+                <th className="text-center py-4 px-4 font-semibold bg-white/5 rounded-t-lg text-white">Pro</th>
+                <th className="text-center py-4 px-4 font-semibold text-white">Business</th>
               </tr>
             </thead>
             <tbody>
               {features.map((category, categoryIndex) => (
                 <React.Fragment key={category.category}>
-                  <tr className="bg-gray-50">
+                  <tr className="bg-black/20">
                     <td
                       colSpan={4}
-                      className="py-3 px-4 font-semibold text-sm text-gray-900"
+                      className="py-3 px-4 font-semibold text-sm text-white"
                     >
                       {category.category}
                     </td>
@@ -85,15 +85,15 @@ export function PricingComparison() {
                   {category.items.map((item, itemIndex) => (
                     <tr
                       key={`${categoryIndex}-${itemIndex}`}
-                      className="border-b border-gray-100 hover:bg-gray-50"
+                      className="border-b border-white/5 hover:bg-white/5 transition-colors"
                     >
-                      <td className="py-3 px-4 text-sm text-gray-600">
+                      <td className="py-3 px-4 text-sm text-white/90">
                         {item.name}
                       </td>
                       <td className="py-3 px-4 text-center">
                         {renderCell(item.free)}
                       </td>
-                      <td className="py-3 px-4 text-center bg-indigo-50/50">
+                      <td className="py-3 px-4 text-center bg-white/5">
                         {renderCell(item.pro)}
                       </td>
                       <td className="py-3 px-4 text-center">

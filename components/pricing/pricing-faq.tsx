@@ -53,22 +53,22 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <Card className="border-0 shadow-none">
+      <Card className="border-0 shadow-none bg-transparent">
         <CollapsibleTrigger className="w-full">
-          <CardHeader className="flex flex-row items-center justify-between py-4 px-6 hover:bg-gray-50 rounded-lg transition-colors">
-            <CardTitle className="text-base font-semibold text-left">
+          <CardHeader className="flex flex-row items-center justify-between py-4 px-6 hover:bg-white/10 rounded-lg transition-colors bg-white/5 backdrop-blur-sm border border-white/10">
+            <CardTitle className="text-base font-semibold text-left text-white">
               {question}
             </CardTitle>
             <ChevronDown
-              className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${
+              className={`h-5 w-5 text-blue-200 transition-transform duration-200 ${
                 isOpen ? "transform rotate-180" : ""
               }`}
             />
           </CardHeader>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <CardContent className="px-6 pb-4 pt-0">
-            <p className="text-gray-600 leading-relaxed">{answer}</p>
+          <CardContent className="px-6 pb-4 pt-4 text-left">
+            <p className="text-blue-100 leading-relaxed pl-2 border-l-2 border-white/20 ml-2">{answer}</p>
           </CardContent>
         </CollapsibleContent>
       </Card>
@@ -80,13 +80,13 @@ export function PricingFAQ() {
   return (
     <div className="w-full max-w-3xl mx-auto">
       <div className="text-center mb-12">
-        <h2 className="text-3xl font-bold mb-4">Frequently Asked Questions</h2>
-        <p className="text-gray-600">
+        <h2 className="text-3xl font-bold mb-4 text-white">Frequently Asked Questions</h2>
+        <p className="text-blue-100">
           Everything you need to know about our pricing and plans
         </p>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-4">
         {faqs.map((faq, index) => (
           <FAQItem key={index} question={faq.question} answer={faq.answer} />
         ))}

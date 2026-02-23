@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { FileText, Sparkles, ArrowLeft } from "lucide-react";
@@ -25,16 +25,25 @@ export default function CreateInvoicePage() {
         clientName: "",
         clientEmail: "",
         clientAddress: "",
-        invoiceNumber: `INV-${new Date().getFullYear()}-001`,
-        invoiceDate: new Date().toISOString().split("T")[0],
-        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-            .toISOString()
-            .split("T")[0],
+        invoiceNumber: "", // Initialized in useEffect
+        invoiceDate: "",   // Initialized in useEffect
+        dueDate: "",       // Initialized in useEffect
         currency: "USD",
         items: [{ id: "1", description: "", quantity: 1, rate: 0 }],
         taxRate: 0,
         notes: "",
     });
+
+    useEffect(() => {
+        setInvoiceData(prev => ({
+            ...prev,
+            invoiceNumber: `INV-${new Date().getFullYear()}-001`,
+            invoiceDate: new Date().toISOString().split("T")[0],
+            dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                .toISOString()
+                .split("T")[0],
+        }));
+    }, []);
 
     const updateField = (field: keyof InvoiceData, value: string | number) => {
         setInvoiceData((prev) => ({ ...prev, [field]: value }));
@@ -101,11 +110,11 @@ export default function CreateInvoicePage() {
                             <Sparkles className="w-4 h-4 text-yellow-300" />
                             <span className="text-sm">Real-time Preview</span>
                         </div>
-                                                <DownloadInvoicePDF
-                                                    data={invoiceData}
-                                                    className="bg-white text-indigo-700 hover:bg-blue-50 font-semibold px-4 py-2 rounded-md"
-                                                    label="Download PDF"
-                                                />
+                        <DownloadInvoicePDF
+                            data={invoiceData}
+                            className="bg-white text-indigo-700 hover:bg-blue-50 font-semibold px-4 py-2 rounded-md"
+                            label="Download PDF"
+                        />
                     </div>
                 </div>
             </header>
@@ -119,13 +128,13 @@ export default function CreateInvoicePage() {
                         <ClientForm data={invoiceData} updateField={updateField} />
                         <InvoiceDetailsForm data={invoiceData} updateField={updateField} />
                         <LineItemsEditor
-                          items={invoiceData.items}
-                          currency={invoiceData.currency}
-                          taxRate={invoiceData.taxRate}
-                          addItem={addItem}
-                          removeItem={removeItem}
-                          updateItem={updateItem}
-                          updateField={updateField}
+                            items={invoiceData.items}
+                            currency={invoiceData.currency}
+                            taxRate={invoiceData.taxRate}
+                            addItem={addItem}
+                            removeItem={removeItem}
+                            updateItem={updateItem}
+                            updateField={updateField}
                         />
                         <NotesField value={invoiceData.notes} onChange={(v) => updateField("notes", v)} />
                     </div>
@@ -147,11 +156,11 @@ export default function CreateInvoicePage() {
 
                         {/* Quick Actions */}
                         <div className="mt-6 flex gap-3">
-                                                        <DownloadInvoicePDF
-                                                            data={invoiceData}
-                                                            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg"
-                                                            label="Download PDF"
-                                                        />
+                            <DownloadInvoicePDF
+                                data={invoiceData}
+                                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg"
+                                label="Download PDF"
+                            />
                         </div>
 
                         {/* Pro Tip */}

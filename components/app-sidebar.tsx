@@ -1,3 +1,5 @@
+"use client"
+
 import { NavMain } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
 import { NavUser } from "@/components/nav-user"
@@ -11,7 +13,8 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { User } from "@supabase/supabase-js"
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client"
+import { useEffect, useState } from "react"
 
 type Team = Parameters<typeof TeamSwitcher>[0]["teams"][number]
 type NavMainItem = Parameters<typeof NavMain>[0]["items"][number]
@@ -140,15 +143,29 @@ interface AppSidebarProps extends ComponentProps<typeof Sidebar> {
   user?: User | null
 }
 
-export async function AppSidebar({ user, ...props }: AppSidebarProps) {
-  const supabase = await createClient();
-  const { data: { user: currentUser } } = await supabase.auth.getUser();
+export function AppSidebar({ user, ...props }: AppSidebarProps) {
+  const [userData, setUserData] = useState({
+    name: "User",
+    email: "",
+    avatar: "/avatars/shadcn.jpg",
+  });
 
-  const userData = {
-    name: currentUser?.user_metadata?.full_name || currentUser?.email?.split("@")[0] || "User",
-    email: currentUser?.email || "",
-    avatar: currentUser?.user_metadata?.avatar_url || "/avatars/shadcn.jpg",
-  }
+  useEffect(() => {
+    async function fetchUser() {
+      const supabase = createClient();
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+
+      if (currentUser) {
+        setUserData({
+          name: currentUser.user_metadata?.full_name || currentUser.email?.split("@")[0] || "User",
+          email: currentUser.email || "",
+          avatar: currentUser.user_metadata?.avatar_url || "/avatars/shadcn.jpg",
+        });
+      }
+    }
+
+    fetchUser();
+  }, []);
 
   return (
     <Sidebar collapsible="icon" {...props}>

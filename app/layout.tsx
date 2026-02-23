@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
-import Navbar from "@/components/navbar";
+import { ConditionalNavbar } from "@/components/conditional-navbar";
 
 
 const defaultUrl = process.env.VERCEL_URL
@@ -35,7 +35,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Navbar />
+          <ConditionalNavbar />
           {children}
         </ThemeProvider>
       </body>
