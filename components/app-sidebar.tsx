@@ -1,183 +1,176 @@
 "use client"
 
+import * as React from "react"
+import {
+  IconCamera,
+  IconChartBar,
+  IconDashboard,
+  IconDatabase,
+  IconFileAi,
+  IconFileDescription,
+  IconFileWord,
+  IconFolder,
+  IconHelp,
+  IconInnerShadowTop,
+  IconListDetails,
+  IconReport,
+  IconSearch,
+  IconSettings,
+  IconUsers,
+} from "@tabler/icons-react"
+
+import { NavDocuments } from "@/components/nav-documents"
 import { NavMain } from "@/components/nav-main"
-import { NavProjects } from "@/components/nav-projects"
+import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
-import { TeamSwitcher } from "@/components/team-switcher"
-import type { ComponentProps } from "react"
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { User } from "@supabase/supabase-js"
-import { createClient } from "@/lib/supabase/client"
-import { useEffect, useState } from "react"
 
-type Team = Parameters<typeof TeamSwitcher>[0]["teams"][number]
-type NavMainItem = Parameters<typeof NavMain>[0]["items"][number]
-type Project = Parameters<typeof NavProjects>[0]["projects"][number]
-
-// This is sample data.
-const data: {
-  teams: Team[]
-  navMain: NavMainItem[]
-  projects: Project[]
-} = {
-  teams: [
-    {
-      name: "Primary Organization",
-      logo: "gallery-vertical-end",
-      plan: "Enterprise",
-    },
-  ],
+const data = {
   navMain: [
     {
+      title: "Dashboard",
+      url: "/dashboard",
+      icon: IconDashboard,
+    },
+    {
       title: "Clients",
-      url: "/invoices/{id}",
-      icon: "square-terminal",
-      isActive: true,
-      items: [
-        {
-          title: "History",
-          url: "/invoices/{id}",
-        },
-        {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
-          url: "#",
-        },
-      ],
+      url: "/clients",
+      icon: IconListDetails,
     },
     {
       title: "Products",
-      url: "#",
-      icon: "bot",
-      items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
-      ],
+      url: "/products",
+      icon: IconChartBar,
     },
     {
       title: "Invoices",
+      url: "/invoices",
+      icon: IconFolder,
+    },
+    {
+      title: "My Team",
+      url: "/team",
+      icon: IconUsers,
+    },
+  ],
+  navClouds: [
+    {
+      title: "Capture",
+      icon: IconCamera,
+      isActive: true,
       url: "#",
-      icon: "book-open",
       items: [
         {
-          title: "Introduction",
+          title: "Active Proposals",
           url: "#",
         },
         {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
+          title: "Archived",
           url: "#",
         },
       ],
     },
+    {
+      title: "Proposal",
+      icon: IconFileDescription,
+      url: "#",
+      items: [
+        {
+          title: "Active Proposals",
+          url: "#",
+        },
+        {
+          title: "Archived",
+          url: "#",
+        },
+      ],
+    },
+    {
+      title: "Prompts",
+      icon: IconFileAi,
+      url: "#",
+      items: [
+        {
+          title: "Active Proposals",
+          url: "#",
+        },
+        {
+          title: "Archived",
+          url: "#",
+        },
+      ],
+    },
+  ],
+  navSecondary: [
     {
       title: "Settings",
-      url: "#",
-      icon: "settings-2",
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
-        },
-      ],
+      url: "/settings",
+      icon: IconSettings,
+    },
+    {
+      title: "Get Help",
+      url: "/help",
+      icon: IconHelp,
+    },
+    {
+      title: "Search",
+      url: "/search",
+      icon: IconSearch,
     },
   ],
-  projects: [
+  documents: [
     {
-      name: "Design Engineering",
+      name: "Data Library",
       url: "#",
-      icon: "frame",
+      icon: IconDatabase,
     },
     {
-      name: "Sales & Marketing",
+      name: "Reports",
       url: "#",
-      icon: "pie-chart",
+      icon: IconReport,
     },
     {
-      name: "Travel",
+      name: "Word Assistant",
       url: "#",
-      icon: "map",
+      icon: IconFileWord,
     },
   ],
 }
 
-interface AppSidebarProps extends ComponentProps<typeof Sidebar> {
-  user?: User | null
-}
-
-export function AppSidebar({ user, ...props }: AppSidebarProps) {
-  const [userData, setUserData] = useState({
-    name: "User",
-    email: "",
-    avatar: "/avatars/shadcn.jpg",
-  });
-
-  useEffect(() => {
-    async function fetchUser() {
-      const supabase = createClient();
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-
-      if (currentUser) {
-        setUserData({
-          name: currentUser.user_metadata?.full_name || currentUser.email?.split("@")[0] || "User",
-          email: currentUser.email || "",
-          avatar: currentUser.user_metadata?.avatar_url || "/avatars/shadcn.jpg",
-        });
-      }
-    }
-
-    fetchUser();
-  }, []);
-
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              className="data-[slot=sidebar-menu-button]:p-1.5!"
+            >
+              <a href="#">
+                <IconInnerShadowTop className="size-5!" />
+                <span className="text-base font-semibold">Acme Inc.</span>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        <NavDocuments items={data.documents} />
+        <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={userData} />
+        <NavUser />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

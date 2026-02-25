@@ -138,7 +138,7 @@ export function LoginForm({
               <Button
                 type="submit"
                 disabled={isLoading}
-                variant="login"
+                variant="default"
                 className="
                       w-full
                       disabled:opacity-50

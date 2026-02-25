@@ -3,10 +3,23 @@
 import { usePathname } from "next/navigation"
 import Navbar from "@/components/navbar"
 
+const dashboardRoutes = [
+  "/dashboard",
+  "/clients",
+  "/products",
+  "/invoices",
+  "/team",
+  "/settings",
+  "/help",
+  "/search",
+]
+
 export function ConditionalNavbar() {
   const pathname = usePathname()
-  // Hide navbar on dashboard routes
-  const isDashboardRoute = pathname?.startsWith("/dashboard")
+  // Hide navbar on all dashboard routes
+  const isDashboardRoute = dashboardRoutes.some(
+    (route) => pathname?.startsWith(route)
+  )
 
   if (isDashboardRoute) {
     return null

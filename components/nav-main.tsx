@@ -1,38 +1,16 @@
 "use client"
 
-import {
-  Bot,
-  BookOpen,
-  ChevronRight,
-  Settings2,
-  SquareTerminal,
-  type LucideIcon,
-} from "lucide-react"
+import Link from "next/link"
+import { IconCirclePlusFilled, IconMail, type Icon } from "@tabler/icons-react"
 
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
+import { Button } from "@/components/ui/button"
 import {
   SidebarGroup,
-  SidebarGroupLabel,
+  SidebarGroupContent,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
-
-const iconComponents = {
-  "square-terminal": SquareTerminal,
-  bot: Bot,
-  "book-open": BookOpen,
-  "settings-2": Settings2,
-} as const
-
-type IconKey = keyof typeof iconComponents
 
 export function NavMain({
   items,
@@ -40,56 +18,44 @@ export function NavMain({
   items: {
     title: string
     url: string
-    icon?: LucideIcon | IconKey
-    isActive?: boolean
-    items?: {
-      title: string
-      url: string
-    }[]
+    icon?: Icon
   }[]
 }) {
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Platform</SidebarGroupLabel>
-      <SidebarMenu>
-        {items.map((item) => (
-          <Collapsible
-            key={item.title}
-            asChild
-            defaultOpen={item.isActive}
-            className="group/collapsible"
-          >
-            <SidebarMenuItem>
-              <CollapsibleTrigger asChild>
-                <SidebarMenuButton tooltip={item.title}>
-                  {(() => {
-                    if (!item.icon) return null
-                    const Icon = typeof item.icon === "string"
-                      ? iconComponents[item.icon]
-                      : item.icon
-                    return Icon ? <Icon /> : null
-                  })()}
+      <SidebarGroupContent className="flex flex-col gap-2">
+        <SidebarMenu>
+          <SidebarMenuItem className="flex items-center gap-2">
+            <SidebarMenuButton
+              tooltip="Quick Create"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
+            >
+              <IconCirclePlusFilled />
+              <span>Quick Create</span>
+            </SidebarMenuButton>
+            <Button
+              size="icon"
+              className="size-8 group-data-[collapsible=icon]:opacity-0"
+              variant="outline"
+            >
+              <IconMail />
+              <span className="sr-only">Inbox</span>
+            </Button>
+          </SidebarMenuItem>
+        </SidebarMenu>
+        <SidebarMenu>
+          {items.map((item) => (
+            <SidebarMenuItem key={item.title}>
+              <SidebarMenuButton asChild tooltip={item.title}>
+                <Link href={item.url}>
+                  {item.icon && <item.icon />}
                   <span>{item.title}</span>
-                  <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                </SidebarMenuButton>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <SidebarMenuSub>
-                  {item.items?.map((subItem) => (
-                    <SidebarMenuSubItem key={subItem.title}>
-                      <SidebarMenuSubButton asChild>
-                        <a href={subItem.url}>
-                          <span>{subItem.title}</span>
-                        </a>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  ))}
-                </SidebarMenuSub>
-              </CollapsibleContent>
+                </Link>
+              </SidebarMenuButton>
             </SidebarMenuItem>
-          </Collapsible>
-        ))}
-      </SidebarMenu>
+          ))}
+        </SidebarMenu>
+      </SidebarGroupContent>
     </SidebarGroup>
   )
 }
