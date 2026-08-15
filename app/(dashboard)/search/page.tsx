@@ -1,6 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
+
+import { createClient } from "@/lib/supabase/client"
 import {
   IconFileInvoice,
   IconSearch,
@@ -27,91 +30,8 @@ type SearchResult = {
   title: string
   subtitle: string
   meta?: string
+  route: string
 }
-
-const allResults: SearchResult[] = [
-  {
-    id: "1",
-    type: "invoice",
-    title: "INV-001",
-    subtitle: "Acme Corporation — $2,500.00",
-    meta: "Paid",
-  },
-  {
-    id: "2",
-    type: "invoice",
-    title: "INV-002",
-    subtitle: "TechStart Inc — $1,800.00",
-    meta: "Pending",
-  },
-  {
-    id: "3",
-    type: "invoice",
-    title: "INV-003",
-    subtitle: "Global Designs — $4,200.00",
-    meta: "Overdue",
-  },
-  {
-    id: "4",
-    type: "client",
-    title: "Acme Corporation",
-    subtitle: "john@acme.com · 12 invoices",
-  },
-  {
-    id: "5",
-    type: "client",
-    title: "TechStart Inc",
-    subtitle: "sarah@techstart.io · 5 invoices",
-  },
-  {
-    id: "6",
-    type: "client",
-    title: "Global Designs",
-    subtitle: "hello@globaldesigns.co · 8 invoices",
-  },
-  {
-    id: "7",
-    type: "product",
-    title: "Website Development",
-    subtitle: "$5,000.00 · Used in 8 invoices",
-  },
-  {
-    id: "8",
-    type: "product",
-    title: "SEO Optimization",
-    subtitle: "$1,200.00/mo · Used in 3 invoices",
-  },
-  {
-    id: "9",
-    type: "product",
-    title: "Logo Design",
-    subtitle: "$800.00 · Used in 5 invoices",
-  },
-  {
-    id: "10",
-    type: "team",
-    title: "Alex Johnson",
-    subtitle: "Admin · alex@company.com",
-  },
-  {
-    id: "11",
-    type: "team",
-    title: "Maria Garcia",
-    subtitle: "Editor · maria@company.com",
-  },
-  {
-    id: "12",
-    type: "setting",
-    title: "Invoice Defaults",
-    subtitle: "Settings > Invoice Defaults",
-  },
-  {
-    id: "13",
-    type: "setting",
-    title: "Notification Preferences",
-    subtitle: "Settings > Notifications",
-  },
-]
 
 const typeIcons: Record<SearchResult["type"], React.ReactNode> = {
   invoice: <IconFileInvoice className="size-4" />,
@@ -138,12 +58,98 @@ const statusColors: Record<string, string> = {
 
 export default function SearchPage() {
   const [query, setQuery] = useState("")
+  const [allResults, setAllResults] = useState<SearchResult[]>([])
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
-  const filtered = allResults.filter(
-    (r) =>
-      r.title.toLowerCase().includes(query.toLowerCase()) ||
-      r.subtitle.toLowerCase().includes(query.toLowerCase())
-  )
+  useEffect(() => {
+    let isMounted = true
+
+    const loadResults = async () => {
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user || !isMounted) return
+
+      const [{ data: organizationData }, { data: clientsData }, { data: productsData }, { data: invoicesData }] =
+        await Promise.all([
+          supabase.from("organizations").select("id").eq("owner_id", user.id).limit(1),
+          supabase.from("clients").select("id, name, email, status").eq("user_id", user.id).order("name"),
+          supabase.from("products").select("id, name, description, unit_price, category").eq("user_id", user.id).order("name"),
+          supabase.from("invoices").select("id, invoice_number, status, total, client_name").eq("user_id", user.id).order("issue_date", { ascending: false }),
+        ])
+
+      let teamResults: SearchResult[] = []
+
+      if (organizationData?.[0]?.id) {
+        const { data: teamData } = await supabase
+          .from("team_members")
+          .select("id, name, email, role, department, status")
+          .eq("organization_id", organizationData[0].id)
+          .order("name")
+
+        teamResults = (teamData ?? []).map((member) => ({
+          id: member.id,
+          type: "team",
+          title: member.name,
+          subtitle: `${member.role} · ${member.email}`,
+          route: "/team",
+        }))
+      }
+
+      const clientResults = (clientsData ?? []).map((client) => ({
+        id: client.id,
+        type: "client" as const,
+        title: client.name,
+        subtitle: `${client.email} · ${client.status}`,
+        route: "/clients",
+      }))
+
+      const productResults = (productsData ?? []).map((product) => ({
+        id: product.id,
+        type: "product" as const,
+        title: product.name,
+        subtitle: `${product.category || "General"} · ${product.description || "No description"}`,
+        route: "/products",
+      }))
+
+      const invoiceResults = (invoicesData ?? []).map((invoice) => ({
+        id: invoice.id,
+        type: "invoice" as const,
+        title: invoice.invoice_number,
+        subtitle: `${invoice.client_name || "Client"} · $${Number(invoice.total ?? 0).toFixed(2)}`,
+        meta: invoice.status ? invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1) : undefined,
+        route: "/invoices",
+      }))
+
+      const nextResults = [...clientResults, ...productResults, ...invoiceResults, ...teamResults]
+
+      if (isMounted) {
+        setAllResults(nextResults)
+        setLoading(false)
+      }
+    }
+
+    void loadResults()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const filtered = useMemo(() => {
+    const nextQuery = query.trim().toLowerCase()
+
+    if (!nextQuery) return allResults
+
+    return allResults.filter(
+      (result) =>
+        result.title.toLowerCase().includes(nextQuery) ||
+        result.subtitle.toLowerCase().includes(nextQuery)
+    )
+  }, [allResults, query])
 
   const byType = (type: SearchResult["type"]) =>
     filtered.filter((r) => r.type === type)
@@ -162,6 +168,7 @@ export default function SearchPage() {
           <div
             key={result.id}
             className="flex items-center gap-3 px-1 py-3 hover:bg-muted/50 rounded-md cursor-pointer transition-colors"
+            onClick={() => router.push(result.route)}
           >
             <div className={`rounded-md p-2 ${typeColors[result.type]}`}>
               {typeIcons[result.type]}

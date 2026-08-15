@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,10 +21,10 @@ export default function ProductsPage() {
                         Create a product catalog to speed up invoice creation. Add items once, use them forever.
                     </p>
                     <Button className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700" asChild>
-                        <a href="/dashboard">
+                        <Link href="/create-product">
                             <Plus className="h-4 w-4 mr-2" />
                             Add New Product
-                        </a>
+                        </Link>
                     </Button>
                 </div>
             </section>
@@ -201,7 +202,7 @@ export default function ProductsPage() {
                         Start managing your product catalog today
                     </p>
                     <Button className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700" size="lg" asChild>
-                        <a href="/dashboard">Get Started Now</a>
+                        <Link href="/create">Get Started Now</Link>
                     </Button>
                 </div>
             </section>

@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import {
   IconDots,
   IconMail,
@@ -251,9 +252,11 @@ export default function ClientsPage() {
                       onChange={(e) => setSearch(e.target.value)}
                     />
                   </div>
-                  <Button size="sm">
-                    <IconPlus className="size-4" />
-                    Add Client
+                  <Button asChild size="sm">
+                    <Link href="/create-client">
+                      <IconPlus className="size-4" />
+                      Add Client
+                    </Link>
                   </Button>
                 </div>
               </div>

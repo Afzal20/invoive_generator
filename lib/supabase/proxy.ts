@@ -38,11 +38,11 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
 
-  // Only protect the dashboard route - all other routes are public
-  if (
-    !user &&
-    request.nextUrl.pathname.startsWith("/dashboard")
-  ) {
+  // Protect dashboard routes - all other routes are public
+  const protectedPaths = ["/dashboard", "/invoices", "/clients", "/settings", "/team", "/products", "/search", "/help"];
+  const isProtectedPath = protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path));
+
+  if (!user && isProtectedPath) {
     // no user, redirect to the login page
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";

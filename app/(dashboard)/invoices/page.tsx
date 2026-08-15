@@ -277,9 +277,11 @@ export default function InvoicesPage() {
                       onChange={(e) => setSearch(e.target.value)}
                     />
                   </div>
-                  <Button size="sm">
-                    <IconPlus className="size-4" />
-                    New Invoice
+                  <Button asChild size="sm">
+                    <a href="/create-invoice">
+                      <IconPlus className="size-4" />
+                      New Invoice
+                    </a>
                   </Button>
                 </div>
               </div>

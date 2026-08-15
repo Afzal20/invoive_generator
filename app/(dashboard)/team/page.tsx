@@ -170,7 +170,12 @@ export default function TeamPage() {
           <div className="px-4 lg:px-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Team Members</h2>
-              <Button size="sm">
+              <Button
+                size="sm"
+                onClick={() => {
+                  window.location.href = "mailto:team@acme.com?subject=Invite%20Member";
+                }}
+              >
                 <IconPlus className="size-4" />
                 Invite Member
               </Button>

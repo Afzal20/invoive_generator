@@ -84,50 +84,58 @@ export default function HelpPage() {
 
           {/* Quick Links */}
           <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="rounded-lg bg-primary/10 p-2">
-                  <IconBook className="size-5 text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm">Getting Started</p>
-                  <p className="text-xs text-muted-foreground">Quick setup guide</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="rounded-lg bg-blue-500/10 p-2">
-                  <IconFileDescription className="size-5 text-blue-500" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm">Documentation</p>
-                  <p className="text-xs text-muted-foreground">Full feature docs</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="rounded-lg bg-green-500/10 p-2">
-                  <IconMessageCircle className="size-5 text-green-500" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm">Community</p>
-                  <p className="text-xs text-muted-foreground">Join discussions</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="rounded-lg bg-orange-500/10 p-2">
-                  <IconBrandGithub className="size-5 text-orange-500" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm">Changelog</p>
-                  <p className="text-xs text-muted-foreground">What&apos;s new</p>
-                </div>
-              </CardContent>
-            </Card>
+            <a href="/dashboard" className="block rounded-lg hover:shadow-md transition-shadow cursor-pointer">
+              <Card className="border-0 shadow-none hover:shadow-md transition-shadow">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <div className="rounded-lg bg-primary/10 p-2">
+                    <IconBook className="size-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">Getting Started</p>
+                    <p className="text-xs text-muted-foreground">Quick setup guide</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </a>
+            <a href="/settings" className="block rounded-lg hover:shadow-md transition-shadow cursor-pointer">
+              <Card className="border-0 shadow-none hover:shadow-md transition-shadow">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <div className="rounded-lg bg-blue-500/10 p-2">
+                    <IconFileDescription className="size-5 text-blue-500" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">Documentation</p>
+                    <p className="text-xs text-muted-foreground">Full feature docs</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </a>
+            <a href="https://github.com" target="_blank" rel="noreferrer" className="block rounded-lg hover:shadow-md transition-shadow cursor-pointer">
+              <Card className="border-0 shadow-none hover:shadow-md transition-shadow">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <div className="rounded-lg bg-green-500/10 p-2">
+                    <IconMessageCircle className="size-5 text-green-500" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">Community</p>
+                    <p className="text-xs text-muted-foreground">Join discussions</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </a>
+            <a href="/help" className="block rounded-lg hover:shadow-md transition-shadow cursor-pointer">
+              <Card className="border-0 shadow-none hover:shadow-md transition-shadow">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <div className="rounded-lg bg-orange-500/10 p-2">
+                    <IconBrandGithub className="size-5 text-orange-500" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">Changelog</p>
+                    <p className="text-xs text-muted-foreground">What&apos;s new</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </a>
           </div>
 
           {/* FAQ */}
@@ -167,17 +175,23 @@ export default function HelpPage() {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col gap-3 @xl/main:flex-row">
-                  <Button variant="outline" className="flex-1 justify-start gap-2">
-                    <IconMail className="size-4" />
-                    Email Support
+                  <Button asChild variant="outline" className="flex-1 justify-start gap-2">
+                    <a href="mailto:support@acme.com?subject=Support%20Request">
+                      <IconMail className="size-4" />
+                      Email Support
+                    </a>
                   </Button>
-                  <Button variant="outline" className="flex-1 justify-start gap-2">
-                    <IconMessageCircle className="size-4" />
-                    Live Chat
+                  <Button asChild variant="outline" className="flex-1 justify-start gap-2">
+                    <a href="https://example.com" target="_blank" rel="noreferrer">
+                      <IconMessageCircle className="size-4" />
+                      Live Chat
+                    </a>
                   </Button>
-                  <Button variant="outline" className="flex-1 justify-start gap-2">
-                    <IconHeadset className="size-4" />
-                    Schedule a Call
+                  <Button asChild variant="outline" className="flex-1 justify-start gap-2">
+                    <a href="tel:+15550000000">
+                      <IconHeadset className="size-4" />
+                      Schedule a Call
+                    </a>
                   </Button>
                 </div>
               </CardContent>
