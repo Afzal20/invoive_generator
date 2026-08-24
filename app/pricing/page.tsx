@@ -90,7 +90,7 @@ export default function PricingPage() {
                             Compare Plans in Detail
                         </h2>
                         <p className="text-lg text-blue-100">
-                            See exactly what's included in each plan
+                            See exactly what&apos;s included in each plan
                         </p>
                     </div>
                     <PricingComparison />

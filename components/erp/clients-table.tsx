@@ -1,0 +1,252 @@
+"use client"
+
+import * as React from "react"
+import Link from "next/link"
+import {
+  IconDots,
+  IconMail,
+  IconPhone,
+  IconPlus,
+  IconSearch,
+  IconTrash,
+} from "@tabler/icons-react"
+
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+} from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import type { ClientWithStats } from "@/lib/erp/types"
+import { formatCurrency, getInitials } from "@/lib/erp/format"
+import { deleteClient } from "@/app/(dashboard)/actions"
+
+export function ClientsTable({ clients }: { clients: ClientWithStats[] }) {
+  const [search, setSearch] = React.useState("")
+  const [pendingId, setPendingId] = React.useState<string | null>(null)
+
+  const filtered = clients.filter(
+    (c) =>
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      c.email.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const totalRevenue = clients.reduce((s, c) => s + c.total_invoiced, 0)
+  const totalOutstanding = clients.reduce((s, c) => s + c.outstanding, 0)
+  const activeClients = clients.filter((c) => c.status === "active").length
+
+  async function handleDelete(id: string) {
+    setPendingId(id)
+    try {
+      await deleteClient(id)
+    } finally {
+      setPendingId(null)
+    }
+  }
+
+  return (
+    <>
+      {/* Stats */}
+      <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 @xl/main:grid-cols-3">
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm text-muted-foreground">Total Clients</p>
+            <p className="text-2xl font-semibold tabular-nums">
+              {clients.length}
+              <span className="ml-2 text-sm font-normal text-muted-foreground">
+                ({activeClients} active)
+              </span>
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm text-muted-foreground">Lifetime Value</p>
+            <p className="text-2xl font-semibold tabular-nums">
+              {formatCurrency(totalRevenue)}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm text-muted-foreground">Outstanding</p>
+            <p className="text-2xl font-semibold tabular-nums">
+              {formatCurrency(totalOutstanding)}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tabs + table */}
+      <div className="px-4 lg:px-6">
+        <Tabs defaultValue="all" className="w-full">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <TabsList>
+              <TabsTrigger value="all">All Clients</TabsTrigger>
+              <TabsTrigger value="active">Active</TabsTrigger>
+              <TabsTrigger value="inactive">Inactive</TabsTrigger>
+            </TabsList>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <IconSearch className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search clients..."
+                  className="pl-9 w-62.5"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+              <Button asChild size="sm">
+                <Link href="/create-client">
+                  <IconPlus className="size-4" />
+                  Add Client
+                </Link>
+              </Button>
+            </div>
+          </div>
+
+          {(["all", "active", "inactive"] as const).map((tab) => (
+            <TabsContent key={tab} value={tab} className="mt-4">
+              <Card>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Client</TableHead>
+                        <TableHead>Contact</TableHead>
+                        <TableHead className="text-right">Invoices</TableHead>
+                        <TableHead className="text-right">Invoiced</TableHead>
+                        <TableHead className="text-right">Outstanding</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(tab === "all"
+                        ? filtered
+                        : filtered.filter((c) => c.status === tab)
+                      ).length === 0 ? (
+                        <TableRow>
+                          <TableCell
+                            colSpan={7}
+                            className="py-10 text-center text-sm text-muted-foreground"
+                          >
+                            No clients found.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        (tab === "all"
+                          ? filtered
+                          : filtered.filter((c) => c.status === tab)
+                        ).map((client) => (
+                          <TableRow key={client.id}>
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <Avatar className="size-8">
+                                  <AvatarFallback className="bg-primary/10 text-xs text-primary">
+                                    {getInitials(client.name)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="min-w-0">
+                                  <span className="block truncate font-medium">
+                                    {client.name}
+                                  </span>
+                                  {client.company && (
+                                    <span className="block truncate text-xs text-muted-foreground">
+                                      {client.company}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col gap-0.5 text-sm">
+                                <span className="flex items-center gap-1 text-muted-foreground">
+                                  <IconMail className="size-3" />
+                                  {client.email}
+                                </span>
+                                {client.phone && (
+                                  <span className="flex items-center gap-1 text-muted-foreground">
+                                    <IconPhone className="size-3" />
+                                    {client.phone}
+                                  </span>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums">
+                              {client.invoice_count}
+                            </TableCell>
+                            <TableCell className="text-right font-medium tabular-nums">
+                              {formatCurrency(client.total_invoiced)}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums">
+                              {formatCurrency(client.outstanding)}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={
+                                  client.status === "active" ? "default" : "secondary"
+                                }
+                              >
+                                {client.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-8"
+                                    disabled={pendingId === client.id}
+                                  >
+                                    <IconDots className="size-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem asChild>
+                                    <Link href={`/create-invoice?client=${client.id}`}>
+                                      Create Invoice
+                                    </Link>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => handleDelete(client.id)}
+                                    className="text-destructive"
+                                  >
+                                    <IconTrash className="size-4" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          ))}
+        </Tabs>
+      </div>
+    </>
+  )
+}

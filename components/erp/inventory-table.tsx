@@ -1,0 +1,293 @@
+"use client"
+
+import * as React from "react"
+import {
+  IconDots,
+  IconMinus,
+  IconPlus,
+  IconSearch,
+  IconTrash,
+} from "@tabler/icons-react"
+
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import type { Product } from "@/lib/erp/types"
+import { formatCurrency } from "@/lib/erp/format"
+import {
+  deleteProduct,
+  toggleProductActive,
+  updateProductStock,
+} from "@/app/(dashboard)/actions"
+
+export function InventoryTable({ products }: { products: Product[] }) {
+  const [search, setSearch] = React.useState("")
+  const [pendingId, setPendingId] = React.useState<string | null>(null)
+
+  const filtered = products.filter(
+    (p) =>
+      p.name.toLowerCase().includes(search.toLowerCase()) ||
+      (p.sku ?? "").toLowerCase().includes(search.toLowerCase()) ||
+      (p.category ?? "").toLowerCase().includes(search.toLowerCase())
+  )
+
+  const tracked = products.filter((p) => p.track_stock)
+  const lowStock = tracked.filter((p) => p.stock_quantity <= p.low_stock_threshold)
+  const inventoryValue = tracked.reduce(
+    (s, p) => s + p.stock_quantity * Number(p.unit_price),
+    0
+  )
+
+  async function adjustStock(id: string, delta: number, current: number) {
+    setPendingId(id)
+    try {
+      await updateProductStock(id, current + delta)
+    } finally {
+      setPendingId(null)
+    }
+  }
+
+  async function handleDelete(id: string) {
+    setPendingId(id)
+    try {
+      await deleteProduct(id)
+    } finally {
+      setPendingId(null)
+    }
+  }
+
+  return (
+    <>
+      {/* Stats */}
+      <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 @xl/main:grid-cols-3">
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm text-muted-foreground">Catalog Items</p>
+            <p className="text-2xl font-semibold tabular-nums">{products.length}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm text-muted-foreground">Inventory Value</p>
+            <p className="text-2xl font-semibold tabular-nums">
+              {formatCurrency(inventoryValue)}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm text-muted-foreground">Low Stock Items</p>
+            <p
+              className={`text-2xl font-semibold tabular-nums ${lowStock.length > 0 ? "text-destructive" : ""}`}
+            >
+              {lowStock.length}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tabs + table */}
+      <div className="px-4 lg:px-6">
+        <Tabs defaultValue="all" className="w-full">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <TabsList>
+              <TabsTrigger value="all">All Products</TabsTrigger>
+              <TabsTrigger value="tracked">Tracked</TabsTrigger>
+              <TabsTrigger value="low">Low Stock</TabsTrigger>
+            </TabsList>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <IconSearch className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search products..."
+                  className="pl-9 w-62.5"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+              <Button asChild size="sm">
+                <a href="/create-product">
+                  <IconPlus className="size-4" />
+                  Add Product
+                </a>
+              </Button>
+            </div>
+          </div>
+
+          {(["all", "tracked", "low"] as const).map((tab) => (
+            <TabsContent key={tab} value={tab} className="mt-4">
+              <Card>
+                <CardContent className="p-0 overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Product</TableHead>
+                        <TableHead>SKU</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead className="text-right">Price</TableHead>
+                        <TableHead className="text-center">Stock</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(tab === "all"
+                        ? filtered
+                        : tab === "tracked"
+                          ? filtered.filter((p) => p.track_stock)
+                          : filtered.filter(
+                              (p) =>
+                                p.track_stock &&
+                                p.stock_quantity <= p.low_stock_threshold
+                            )
+                      ).length === 0 ? (
+                        <TableRow>
+                          <TableCell
+                            colSpan={7}
+                            className="py-10 text-center text-sm text-muted-foreground"
+                          >
+                            No products found.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        (tab === "all"
+                          ? filtered
+                          : tab === "tracked"
+                            ? filtered.filter((p) => p.track_stock)
+                            : filtered.filter(
+                                (p) =>
+                                  p.track_stock &&
+                                  p.stock_quantity <= p.low_stock_threshold
+                              )
+                        ).map((product) => (
+                          <TableRow key={product.id}>
+                            <TableCell>
+                              <div className="min-w-0">
+                                <span className="block truncate font-medium">
+                                  {product.name}
+                                </span>
+                                {product.description && (
+                                  <span className="block max-w-64 truncate text-xs text-muted-foreground">
+                                    {product.description}
+                                  </span>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-mono text-sm text-muted-foreground">
+                              {product.sku || "—"}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {product.category || "—"}
+                            </TableCell>
+                            <TableCell className="text-right font-medium tabular-nums">
+                              {formatCurrency(Number(product.unit_price), product.currency)}
+                            </TableCell>
+                            <TableCell>
+                              {product.track_stock ? (
+                                <div className="flex items-center justify-center gap-1">
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="size-7"
+                                    disabled={pendingId === product.id || product.stock_quantity <= 0}
+                                    onClick={() =>
+                                      adjustStock(product.id, -1, product.stock_quantity)
+                                    }
+                                  >
+                                    <IconMinus className="size-3" />
+                                  </Button>
+                                  <Badge
+                                    variant={
+                                      product.stock_quantity <= product.low_stock_threshold
+                                        ? "destructive"
+                                        : "secondary"
+                                    }
+                                    className="min-w-12 justify-center"
+                                  >
+                                    {product.stock_quantity}
+                                  </Badge>
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="size-7"
+                                    disabled={pendingId === product.id}
+                                    onClick={() =>
+                                      adjustStock(product.id, 1, product.stock_quantity)
+                                    }
+                                  >
+                                    <IconPlus className="size-3" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <span className="block text-center text-sm text-muted-foreground">
+                                  —
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={product.is_active ? "default" : "secondary"}
+                              >
+                                {product.is_active ? "active" : "inactive"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-8"
+                                    disabled={pendingId === product.id}
+                                  >
+                                    <IconDots className="size-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      toggleProductActive(product.id, !product.is_active)
+                                    }
+                                  >
+                                    {product.is_active ? "Deactivate" : "Activate"}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => handleDelete(product.id)}
+                                    className="text-destructive"
+                                  >
+                                    <IconTrash className="size-4" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          ))}
+        </Tabs>
+      </div>
+    </>
+  )
+}

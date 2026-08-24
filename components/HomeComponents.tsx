@@ -93,7 +93,7 @@ export default function HomeComponents() {
             className="bg-white text-blue-700 hover:bg-blue-50 px-8"
             asChild
           >
-            <Link href="/create">Try It Now - It's Free →</Link>
+            <Link href="/create">Try It Now - It&apos;s Free →</Link>
           </Button>
         </div>
       </div>

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
@@ -35,7 +36,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <ConditionalNavbar />
+          <Suspense fallback={null}>
+            <ConditionalNavbar />
+          </Suspense>
           {children}
         </ThemeProvider>
       </body>

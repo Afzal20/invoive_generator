@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
-import { Badge } from "../ui/badge";
 import { Check, X, Zap, Sparkles, Shield } from "lucide-react";
 
 const pricingTiers = [

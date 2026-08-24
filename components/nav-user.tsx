@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import {
   IconCreditCard,
   IconDotsVertical,
-  IconLogout,
   IconNotification,
   IconUserCircle,
 } from "@tabler/icons-react"

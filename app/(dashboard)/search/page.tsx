@@ -59,7 +59,7 @@ const statusColors: Record<string, string> = {
 export default function SearchPage() {
   const [query, setQuery] = useState("")
   const [allResults, setAllResults] = useState<SearchResult[]>([])
-  const [loading, setLoading] = useState(true)
+  const [, setLoading] = useState(true)
   const router = useRouter()
 
   useEffect(() => {

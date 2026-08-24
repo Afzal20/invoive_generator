@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Mail, MessageSquare, Phone, MapPin, Clock, LucideSignal } from "lucide-react";
+import { Mail, MessageSquare, Phone, Clock } from "lucide-react";
 import { useState } from "react";
 
 export default function ContactsPage() {
@@ -32,7 +32,7 @@ export default function ContactsPage() {
                         Get in Touch
                     </Badge>
                     <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                        We'd Love to Hear From You
+                        We&apos;d Love to Hear From You
                     </h1>
                     <p className="text-xl text-gray-600 leading-relaxed">
                         Have a question, feedback, or need help? Our team is here to assist you.
@@ -188,7 +188,7 @@ export default function ContactsPage() {
                             </CardHeader>
                             <CardContent>
                                 <p className="text-gray-600 text-sm">
-                                    Simply click "Get Started" and fill in your business details, add line items,
+                                    Simply click &quot;Get Started&quot; and fill in your business details, add line items,
                                     and download your professional invoice as a PDF.
                                 </p>
                             </CardContent>

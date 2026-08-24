@@ -123,7 +123,7 @@ export function FeaturesSection() {
             <div className="max-w-7xl mx-auto">
                 <div className="text-center mb-16">
                     <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-                        Everything You Need, Nothing You Don't
+                        Everything You Need, Nothing You Don&apos;t
                     </h2>
                     <p className="text-xl text-gray-600 max-w-3xl mx-auto">
                         Our feature set is designed for one purpose: to make your invoicing process as fast and

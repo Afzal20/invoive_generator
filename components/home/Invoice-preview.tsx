@@ -1,4 +1,3 @@
-import { Sparkles, Zap, Clock, Shield, Globe, Smartphone } from "lucide-react";
 
 
 export function InvoicePreview() {

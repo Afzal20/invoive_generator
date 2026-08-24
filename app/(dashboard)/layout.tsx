@@ -9,6 +9,7 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/site-header";
+import { Toaster } from "@/components/ui/sonner";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -32,7 +33,10 @@ async function DashboardGuard({ children }: DashboardLayoutProps) {
     redirect("/auth/login");
   }
 
-  const cookieStore = await cookies();
+  const [{ data: profile }, cookieStore] = await Promise.all([
+    supabase.from("profiles").select("company_name").eq("id", user.id).single(),
+    cookies(),
+  ]);
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
 
   return (
@@ -45,10 +49,11 @@ async function DashboardGuard({ children }: DashboardLayoutProps) {
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant="inset" />
+      <AppSidebar variant="inset" companyName={profile?.company_name || undefined} />
       <SidebarInset>
         <SiteHeader />
         <main className="flex-1">{children}</main>
+        <Toaster />
       </SidebarInset>
     </SidebarProvider>
   );

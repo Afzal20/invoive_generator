@@ -14,7 +14,7 @@ export function HeroSection() {
                     Simplifying Invoicing for Everyone
                 </h1>
                 <p className="text-xl text-background leading-relaxed">
-                    We're on a mission to help freelancers and small businesses create professional invoices
+                    We&apos;re on a mission to help freelancers and small businesses create professional invoices
                     in seconds, not hours. No complexity, just results.
                 </p>
             </div>
@@ -86,7 +86,7 @@ export function Values() {
                         </CardHeader>
                         <CardContent>
                             <p className="text-gray-600">
-                                Every pixel, every interaction is crafted with attention to detail. We're
+                                Every pixel, every interaction is crafted with attention to detail. We&apos;re
                                 perfectionists who care about your experience.
                             </p>
                         </CardContent>
@@ -116,7 +116,7 @@ export function Values() {
                         </CardHeader>
                         <CardContent>
                             <p className="text-gray-600">
-                                We're constantly improving and adding features. Your success drives our
+                                We&apos;re constantly improving and adding features. Your success drives our
                                 innovation.
                             </p>
                         </CardContent>
