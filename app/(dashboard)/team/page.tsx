@@ -1,8 +1,10 @@
 import { TeamView } from "@/components/erp/team-view";
 import { getProfile, getTeamData } from "@/lib/erp/queries";
+import { requireOrg } from "@/lib/erp/org";
 
 export default async function TeamPage() {
-  const [team, profile] = await Promise.all([getTeamData(), getProfile()]);
+  const { org, member } = await requireOrg();
+  const [team, profile] = await Promise.all([getTeamData(org.id), getProfile()]);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -19,6 +21,7 @@ export default async function TeamPage() {
               organization={team.organization}
               members={team.members}
               profile={profile}
+              myRole={member.role}
             />
           </div>
         </div>

@@ -1,8 +1,10 @@
 import { InventoryTable } from "@/components/erp/inventory-table"
 import { getProducts } from "@/lib/erp/queries"
+import { requireOrg } from "@/lib/erp/org"
 
 export default async function ProductsPage() {
-  const products = await getProducts()
+  const { org } = await requireOrg()
+  const products = await getProducts(org.id)
 
   return (
     <div className="flex flex-1 flex-col">

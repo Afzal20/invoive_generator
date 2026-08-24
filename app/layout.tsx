@@ -12,8 +12,13 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "Invoice Generator",
-  description: "The best and easiest way to generate invoices for your business and manage your Data",
+  title: {
+    default: "BizPilot — Your Business, on Autopilot",
+    template: "%s · BizPilot",
+  },
+  description:
+    "BizPilot is the mini ERP for small businesses: send professional invoices, track clients, manage inventory and expenses, and watch your numbers — all from one dashboard.",
+  applicationName: "BizPilot",
 };
 
 const geistSans = Geist({

@@ -46,13 +46,14 @@ export async function getProfile(): Promise<Profile | null> {
   return (data as Profile) ?? null;
 }
 
-// ---------- Invoices ----------
+// ---------- Invoices (org-scoped) ----------
 
-export async function getInvoices(): Promise<Invoice[]> {
+export async function getInvoices(orgId: string): Promise<Invoice[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("invoices")
     .select("*")
+    .eq("organization_id", orgId)
     .order("created_at", { ascending: false });
   return (data as Invoice[]) ?? [];
 }
@@ -87,13 +88,13 @@ export async function getInvoice(id: string): Promise<InvoiceWithItems | null> {
   };
 }
 
-// ---------- Clients with aggregated stats ----------
+// ---------- Clients with aggregated stats (org-scoped) ----------
 
-export async function getClientsWithStats(): Promise<ClientWithStats[]> {
+export async function getClientsWithStats(orgId: string): Promise<ClientWithStats[]> {
   const supabase = await createClient();
   const [{ data: clients }, { data: invoices }] = await Promise.all([
-    supabase.from("clients").select("*").order("name"),
-    supabase.from("invoices").select("client_id,total,status"),
+    supabase.from("clients").select("*").eq("organization_id", orgId).order("name"),
+    supabase.from("invoices").select("client_id,total,status").eq("organization_id", orgId),
   ]);
 
   const statsByClient = new Map<
@@ -125,37 +126,39 @@ export async function getClientsWithStats(): Promise<ClientWithStats[]> {
   });
 }
 
-// ---------- Products / Inventory ----------
+// ---------- Products / Inventory (org-scoped) ----------
 
-export async function getProducts(): Promise<Product[]> {
+export async function getProducts(orgId: string): Promise<Product[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("products")
     .select("*")
+    .eq("organization_id", orgId)
     .order("created_at", { ascending: false });
   return (data as Product[]) ?? [];
 }
 
-// ---------- Expenses ----------
+// ---------- Expenses (org-scoped) ----------
 
-export async function getExpenses(): Promise<Expense[]> {
+export async function getExpenses(orgId: string): Promise<Expense[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("expenses")
     .select("*")
+    .eq("organization_id", orgId)
     .order("expense_date", { ascending: false });
   return (data as Expense[]) ?? [];
 }
 
-// ---------- Dashboard ----------
+// ---------- Dashboard (org-scoped) ----------
 
-export async function getDashboardStats(): Promise<DashboardStats> {
+export async function getDashboardStats(orgId: string): Promise<DashboardStats> {
   const supabase = await createClient();
   const [invoicesRes, expensesRes, clientsRes, productsRes] = await Promise.all([
-    supabase.from("invoices").select("*").order("created_at", { ascending: false }),
-    supabase.from("expenses").select("*").order("expense_date", { ascending: false }),
-    supabase.from("clients").select("id", { count: "exact" }),
-    supabase.from("products").select("*"),
+    supabase.from("invoices").select("*").eq("organization_id", orgId).order("created_at", { ascending: false }),
+    supabase.from("expenses").select("*").eq("organization_id", orgId).order("expense_date", { ascending: false }),
+    supabase.from("clients").select("id", { count: "exact" }).eq("organization_id", orgId),
+    supabase.from("products").select("*").eq("organization_id", orgId),
   ]);
 
   const invoices = (invoicesRes.data as Invoice[]) ?? [];
@@ -221,22 +224,20 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   };
 }
 
-// ---------- Team ----------
+// ---------- Team (org-scoped) ----------
 
 export interface TeamData {
   organization: Organization | null;
   members: TeamMember[];
 }
 
-export async function getTeamData(): Promise<TeamData> {
-  const user = await getUser();
-  if (!user) return { organization: null, members: [] };
-
+export async function getTeamData(orgId: string): Promise<TeamData> {
   const supabase = await createClient();
+
   const { data: organization } = await supabase
     .from("organizations")
     .select("*")
-    .eq("owner_id", user.id)
+    .eq("id", orgId)
     .maybeSingle();
 
   let members: TeamMember[] = [];
@@ -244,7 +245,7 @@ export async function getTeamData(): Promise<TeamData> {
     const { data } = await supabase
       .from("team_members")
       .select("*")
-      .eq("organization_id", organization.id)
+      .eq("organization_id", orgId)
       .order("created_at", { ascending: true });
     members = (data as TeamMember[]) ?? [];
   }
@@ -252,7 +253,7 @@ export async function getTeamData(): Promise<TeamData> {
   return { organization: (organization as Organization) ?? null, members };
 }
 
-// ---------- Reports ----------
+// ---------- Reports (org-scoped) ----------
 
 export interface ReportData {
   monthly_series: { month: string; revenue: number; expenses: number; profit: number }[];
@@ -268,11 +269,11 @@ export interface ReportData {
   };
 }
 
-export async function getReportData(): Promise<ReportData> {
+export async function getReportData(orgId: string): Promise<ReportData> {
   const [invoices, expenses, clients] = await Promise.all([
-    getInvoices(),
-    getExpenses(),
-    getClientsWithStats(),
+    getInvoices(orgId),
+    getExpenses(orgId),
+    getClientsWithStats(orgId),
   ]);
 
   const months = lastNMonths(12);

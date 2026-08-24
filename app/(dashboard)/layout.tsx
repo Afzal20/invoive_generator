@@ -3,6 +3,10 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import {
+  claimPendingInvites,
+  getMemberships,
+} from "@/lib/erp/org";
 import { AppSidebar } from "@/components/app-sidebar";
 import {
   SidebarInset,
@@ -33,10 +37,17 @@ async function DashboardGuard({ children }: DashboardLayoutProps) {
     redirect("/auth/login");
   }
 
-  const [{ data: profile }, cookieStore] = await Promise.all([
-    supabase.from("profiles").select("company_name").eq("id", user.id).single(),
+  // Accept any team invites pending for this email (full SaaS loop)
+  await claimPendingInvites(user.email ?? "", user.id);
+
+  const [memberships, cookieStore] = await Promise.all([
+    getMemberships(),
     cookies(),
   ]);
+  const activeOrgId = cookieStore.get("bp_active_org")?.value;
+  const activeOrg =
+    memberships.find((m) => m.org.id === activeOrgId) ?? memberships[0];
+
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
 
   return (
@@ -49,7 +60,15 @@ async function DashboardGuard({ children }: DashboardLayoutProps) {
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant="inset" companyName={profile?.company_name || undefined} />
+      <AppSidebar
+        variant="inset"
+        organizations={memberships.map((m) => ({
+          id: m.org.id,
+          name: m.org.name,
+          role: m.member.role,
+        }))}
+        activeOrgId={activeOrg?.org.id}
+      />
       <SidebarInset>
         <SiteHeader />
         <main className="flex-1">{children}</main>

@@ -15,10 +15,13 @@ import {
 } from "@/components/ui/table"
 import { RevenueExpenseChart } from "@/components/dashboard/revenue-expense-chart"
 import { getReportData } from "@/lib/erp/queries"
+import { requireOrg } from "@/lib/erp/org"
+import { AskBizPilot } from "@/components/erp/ask-bizpilot"
 import { formatCurrency } from "@/lib/erp/format"
 
 export default async function ReportsPage() {
-  const report = await getReportData()
+  const { org } = await requireOrg()
+  const report = await getReportData(org.id)
   const maxCategory = Math.max(1, ...report.expense_by_category.map((c) => c.amount))
 
   return (
@@ -30,6 +33,11 @@ export default async function ReportsPage() {
             <p className="text-sm text-muted-foreground">
               Business performance overview across revenue, expenses, and clients.
             </p>
+          </div>
+
+          {/* AI assistant */}
+          <div className="px-4 lg:px-6">
+            <AskBizPilot orgName={org.name} />
           </div>
 
           {/* Summary cards */}

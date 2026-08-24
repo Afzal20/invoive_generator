@@ -11,11 +11,12 @@ export function HeroSection() {
                     About Us
                 </Badge>
                 <h1 className="text-4xl md:text-6xl font-bold mb-6 text-background">
-                    Simplifying Invoicing for Everyone
+                    Your Business, on Autopilot
                 </h1>
                 <p className="text-xl text-background leading-relaxed">
-                    We&apos;re on a mission to help freelancers and small businesses create professional invoices
-                    in seconds, not hours. No complexity, just results.
+                    We&apos;re on a mission to give small businesses the tools big companies take for
+                    granted — invoicing, clients, inventory, expenses and insights in one place.
+                    No enterprise price tags. No complexity. Just results.
                 </p>
             </div>
         </section>
@@ -133,10 +134,10 @@ export function CallToAction() {
         <section className="py-20 px-4">
             <div className="max-w-4xl mx-auto text-center">
                 <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                    Ready to Create Your First Invoice?
+                    Ready for Takeoff?
                 </h2>
                 <p className="text-xl text-background mb-8">
-                    Join thousands of professionals who trust Invoice Generator
+                    Join thousands of owners who run their business on BizPilot
                 </p>
                 <a
                     href="/get-started"

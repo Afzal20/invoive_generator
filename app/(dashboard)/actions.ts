@@ -1,8 +1,258 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import type { InvoiceStatus, PaymentMethod } from "@/lib/erp/types";
+import {
+  ACTIVE_ORG_COOKIE,
+  getMemberships,
+  requireRole,
+} from "@/lib/erp/org";
+import type { InvoiceStatus, PaymentMethod, TeamRole } from "@/lib/erp/types";
+
+function str(fd: FormData, key: string, fallback = "") {
+  const v = fd.get(key);
+  return typeof v === "string" && v.trim() !== "" ? v.trim() : fallback;
+}
+
+function num(fd: FormData, key: string, fallback = 0) {
+  const v = Number(fd.get(key));
+  return Number.isFinite(v) ? v : fallback;
+}
+
+async function requireUserId() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+  return user.id;
+}
+
+export interface ActionResult {
+  ok: boolean;
+  error?: string;
+  id?: string;
+}
+
+// ===================== ORGANIZATIONS =====================
+
+export async function switchOrganization(orgId: string): Promise<ActionResult> {
+  try {
+    const ctxList = await getMemberships();
+    if (!ctxList.some((m) => m.org.id === orgId))
+      return { ok: false, error: "You are not a member of that organization." };
+
+    const cookieStore = await cookies();
+    cookieStore.set(ACTIVE_ORG_COOKIE, orgId, {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+    });
+    revalidatePath("/", "layout");
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "Failed to switch organization." };
+  }
+}
+
+export async function createOrganization(
+  name: string,
+): Promise<ActionResult> {
+  try {
+    const userId = await requireUserId();
+    const supabase = await createClient();
+    const clean = name.trim().slice(0, 80);
+    if (!clean) return { ok: false, error: "Enter a business name." };
+
+    const { data: user } = await supabase.auth.getUser();
+
+    const { data: org, error } = await supabase
+      .from("organizations")
+      .insert({ owner_id: userId, name: clean })
+      .select("id")
+      .single();
+    if (error || !org) return { ok: false, error: error?.message ?? "Failed." };
+
+    // RLS lets us insert our own membership as owner
+    const { error: memberError } = await supabase.from("team_members").insert({
+      organization_id: org.id,
+      user_id: userId,
+      email: user.user?.email ?? "",
+      name: "",
+      role: "owner" as TeamRole,
+      status: "active",
+      joined_at: new Date().toISOString(),
+    });
+    if (memberError)
+      return { ok: false, error: memberError.message };
+
+    const cookieStore = await cookies();
+    cookieStore.set(ACTIVE_ORG_COOKIE, org.id, {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+    });
+    revalidatePath("/", "layout");
+    return { ok: true, id: org.id };
+  } catch {
+    return { ok: false, error: "Failed to create organization." };
+  }
+}
+
+export async function updateOrganization(formData: FormData): Promise<ActionResult> {
+  try {
+    const ctx = await requireRole("admin");
+    const supabase = await createClient();
+
+    const name = str(formData, "name");
+    if (!name) return { ok: false, error: "Business name is required." };
+
+    const { error } = await supabase
+      .from("organizations")
+      .update({
+        name,
+        company_email: str(formData, "company_email"),
+        company_address: str(formData, "company_address"),
+        company_phone: str(formData, "company_phone"),
+        default_currency: str(formData, "default_currency", "USD"),
+        default_tax_rate: num(formData, "default_tax_rate"),
+        default_notes: str(formData, "default_notes"),
+        default_terms: str(formData, "default_terms"),
+      })
+      .eq("id", ctx.org.id);
+    if (error) return { ok: false, error: error.message };
+
+    revalidatePath("/", "layout");
+    revalidatePath("/settings");
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Failed." };
+  }
+}
+
+// ===================== EXPENSES =====================
+
+export async function createExpense(formData: FormData) {
+  const ctx = await requireRole("editor");
+  const supabase = await createClient();
+
+  const title = str(formData, "title");
+  if (!title) return;
+
+  await supabase.from("expenses").insert({
+    user_id: ctx.member.user_id,
+    organization_id: ctx.org.id,
+    title,
+    category: str(formData, "category", "other"),
+    vendor: str(formData, "vendor"),
+    amount: num(formData, "amount"),
+    currency: str(formData, "currency", "USD"),
+    expense_date: str(formData, "expense_date", new Date().toISOString().slice(0, 10)),
+    payment_method: (str(formData, "payment_method", "cash") || "cash") as PaymentMethod,
+    notes: str(formData, "notes"),
+  });
+
+  revalidatePath("/expenses");
+  revalidatePath("/dashboard");
+  revalidatePath("/reports");
+}
+
+export async function deleteExpense(id: string) {
+  await requireRole("editor");
+  const supabase = await createClient();
+  await supabase.from("expenses").delete().eq("id", id);
+  revalidatePath("/expenses");
+  revalidatePath("/dashboard");
+  revalidatePath("/reports");
+}
+
+// ===================== INVOICES =====================
+
+export async function markInvoicePaid(invoiceId: string) {
+  const ctx = await requireRole("editor");
+  const supabase = await createClient();
+
+  const { data: invoice } = await supabase
+    .from("invoices")
+    .select("id,total,currency,status")
+    .eq("id", invoiceId)
+    .single();
+  if (!invoice || invoice.status === "paid") return;
+
+  // Record a payment for the remaining balance (respects partial payments)
+  const { data: existing } = await supabase
+    .from("payments")
+    .select("amount")
+    .eq("invoice_id", invoiceId);
+  const alreadyPaid = (existing ?? []).reduce((s, p) => s + Number(p.amount), 0);
+  const remaining = Math.max(0, Number(invoice.total) - alreadyPaid);
+
+  if (remaining > 0) {
+    await supabase.from("payments").insert({
+      user_id: ctx.member.user_id,
+      invoice_id: invoiceId,
+      amount: Number(remaining.toFixed(2)),
+      currency: invoice.currency ?? "USD",
+      payment_date: new Date().toISOString().slice(0, 10),
+      organization_id: ctx.org.id,
+    });
+  }
+
+  await supabase
+    .from("invoices")
+    .update({ status: "paid" as InvoiceStatus })
+    .eq("id", invoiceId);
+
+  revalidatePath("/invoices");
+  revalidatePath(`/invoices/${invoiceId}`);
+  revalidatePath("/dashboard");
+  revalidatePath("/reports");
+}
+
+export async function updateInvoiceStatus(invoiceId: string, status: InvoiceStatus) {
+  await requireRole("editor");
+  const supabase = await createClient();
+  await supabase.from("invoices").update({ status }).eq("id", invoiceId);
+  revalidatePath("/invoices");
+  revalidatePath(`/invoices/${invoiceId}`);
+  revalidatePath("/dashboard");
+}
+
+export async function deleteInvoice(invoiceId: string) {
+  await requireRole("editor");
+  const supabase = await createClient();
+  await supabase.from("invoices").delete().eq("id", invoiceId);
+  revalidatePath("/invoices");
+  revalidatePath("/dashboard");
+  revalidatePath("/reports");
+}
+
+async function nextInvoiceNumber(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  orgId: string,
+): Promise<string> {
+  const year = new Date().getFullYear();
+  const { count } = await supabase
+    .from("invoices")
+    .select("id", { count: "exact", head: true })
+    .eq("organization_id", orgId);
+  let seq = (count ?? 0) + 1;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const candidate = `INV-${year}-${String(seq).padStart(3, "0")}`;
+    const { data } = await supabase
+      .from("invoices")
+      .select("id")
+      .eq("organization_id", orgId)
+      .eq("invoice_number", candidate)
+      .maybeSingle();
+    if (!data) return candidate;
+    seq += 1;
+  }
+  return `INV-${year}-${Date.now().toString().slice(-6)}`;
+}
 
 export interface CreateInvoiceItemInput {
   description: string;
@@ -28,155 +278,13 @@ export interface CreateInvoiceInput {
   items: CreateInvoiceItemInput[];
 }
 
-export interface ActionResult {
-  ok: boolean;
-  error?: string;
-  id?: string;
-}
-
-function str(fd: FormData, key: string, fallback = "") {
-  const v = fd.get(key);
-  return typeof v === "string" && v.trim() !== "" ? v.trim() : fallback;
-}
-
-function num(fd: FormData, key: string, fallback = 0) {
-  const v = Number(fd.get(key));
-  return Number.isFinite(v) ? v : fallback;
-}
-
-async function requireUserId() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
-  return user.id;
-}
-
-// ===================== EXPENSES =====================
-
-export async function createExpense(formData: FormData) {
-  const userId = await requireUserId();
-  const supabase = await createClient();
-
-  const title = str(formData, "title");
-  if (!title) return;
-
-  await supabase.from("expenses").insert({
-    user_id: userId,
-    title,
-    category: str(formData, "category", "other"),
-    vendor: str(formData, "vendor"),
-    amount: num(formData, "amount"),
-    currency: str(formData, "currency", "USD"),
-    expense_date: str(formData, "expense_date", new Date().toISOString().slice(0, 10)),
-    payment_method: (str(formData, "payment_method", "cash") || "cash") as PaymentMethod,
-    notes: str(formData, "notes"),
-  });
-
-  revalidatePath("/expenses");
-  revalidatePath("/dashboard");
-  revalidatePath("/reports");
-}
-
-export async function deleteExpense(id: string) {
-  await requireUserId();
-  const supabase = await createClient();
-  await supabase.from("expenses").delete().eq("id", id);
-  revalidatePath("/expenses");
-  revalidatePath("/dashboard");
-  revalidatePath("/reports");
-}
-
-// ===================== INVOICES =====================
-
-export async function markInvoicePaid(invoiceId: string) {
-  const userId = await requireUserId();
-  const supabase = await createClient();
-
-  const { data: invoice } = await supabase
-    .from("invoices")
-    .select("id,total,currency,status")
-    .eq("id", invoiceId)
-    .single();
-  if (!invoice || invoice.status === "paid") return;
-
-  // Record a payment for the remaining balance (respects partial payments)
-  const { data: existing } = await supabase
-    .from("payments")
-    .select("amount")
-    .eq("invoice_id", invoiceId);
-  const alreadyPaid = (existing ?? []).reduce((s, p) => s + Number(p.amount), 0);
-  const remaining = Math.max(0, Number(invoice.total) - alreadyPaid);
-
-  if (remaining > 0) {
-    await supabase.from("payments").insert({
-      user_id: userId,
-      invoice_id: invoiceId,
-      amount: Number(remaining.toFixed(2)),
-      currency: invoice.currency ?? "USD",
-      payment_date: new Date().toISOString().slice(0, 10),
-    });
-  }
-
-  await supabase
-    .from("invoices")
-    .update({ status: "paid" as InvoiceStatus })
-    .eq("id", invoiceId);
-
-  revalidatePath("/invoices");
-  revalidatePath("/dashboard");
-  revalidatePath("/reports");
-}
-
-export async function updateInvoiceStatus(invoiceId: string, status: InvoiceStatus) {
-  await requireUserId();
-  const supabase = await createClient();
-  await supabase.from("invoices").update({ status }).eq("id", invoiceId);
-  revalidatePath("/invoices");
-  revalidatePath("/dashboard");
-}
-
-export async function deleteInvoice(invoiceId: string) {
-  await requireUserId();
-  const supabase = await createClient();
-  await supabase.from("invoices").delete().eq("id", invoiceId);
-  revalidatePath("/invoices");
-  revalidatePath("/dashboard");
-  revalidatePath("/reports");
-}
-
-async function nextInvoiceNumber(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
-): Promise<string> {
-  const year = new Date().getFullYear();
-  const { count } = await supabase
-    .from("invoices")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId);
-  let seq = (count ?? 0) + 1;
-  // Retry a few times in case of number collisions
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const candidate = `INV-${year}-${String(seq).padStart(3, "0")}`;
-    const { data } = await supabase
-      .from("invoices")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("invoice_number", candidate)
-      .maybeSingle();
-    if (!data) return candidate;
-    seq += 1;
-  }
-  return `INV-${year}-${Date.now().toString().slice(-6)}`;
-}
-
 export async function createInvoiceAction(
   input: CreateInvoiceInput,
 ): Promise<ActionResult> {
   try {
-    const userId = await requireUserId();
+    const ctx = await requireRole("editor");
     const supabase = await createClient();
+    const orgId = ctx.org.id;
 
     if (!input.due_date) return { ok: false, error: "Due date is required." };
     const items = (input.items ?? []).filter(
@@ -185,11 +293,11 @@ export async function createInvoiceAction(
     if (items.length === 0)
       return { ok: false, error: "Add at least one line item." };
 
-    // Snapshot business details from profile
-    const { data: profile } = await supabase
-      .from("profiles")
+    // Snapshot business details from the active organization
+    const { data: org } = await supabase
+      .from("organizations")
       .select("*")
-      .eq("id", userId)
+      .eq("id", orgId)
       .single();
 
     const subtotal = items.reduce(
@@ -202,14 +310,15 @@ export async function createInvoiceAction(
 
     const invoiceNumber =
       input.invoice_number.trim() ||
-      (await nextInvoiceNumber(supabase, userId));
+      (await nextInvoiceNumber(supabase, orgId));
 
     const status: InvoiceStatus = input.status === "pending" ? "pending" : "draft";
 
     const { data: invoice, error: invError } = await supabase
       .from("invoices")
       .insert({
-        user_id: userId,
+        user_id: ctx.member.user_id,
+        organization_id: orgId,
         client_id: input.client_id || null,
         invoice_number: invoiceNumber,
         status,
@@ -223,10 +332,10 @@ export async function createInvoiceAction(
         total: Number(total.toFixed(2)),
         notes: input.notes ?? "",
         terms: input.terms ?? "",
-        business_name: profile?.company_name ?? "",
-        business_email: profile?.company_email ?? "",
-        business_address: profile?.company_address ?? "",
-        business_phone: profile?.company_phone ?? "",
+        business_name: org?.name ?? "",
+        business_email: org?.company_email ?? "",
+        business_address: org?.company_address ?? "",
+        business_phone: org?.company_phone ?? "",
         client_name: input.client_name ?? "",
         client_email: input.client_email ?? "",
         client_address: input.client_address ?? "",
@@ -262,7 +371,7 @@ export async function createInvoiceAction(
         .from("products")
         .select("id,stock_quantity,track_stock")
         .in("id", productIds)
-        .eq("user_id", userId);
+        .eq("organization_id", orgId);
       for (const p of products ?? []) {
         if (!p.track_stock) continue;
         const sold = items
@@ -283,14 +392,17 @@ export async function createInvoiceAction(
     revalidatePath("/reports");
     revalidatePath("/products");
     return { ok: true, id: invoice.id };
-  } catch {
-    return { ok: false, error: "Something went wrong. Please try again." };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Something went wrong. Please try again.",
+    };
   }
 }
 
 export async function recordPayment(formData: FormData): Promise<ActionResult> {
   try {
-    const userId = await requireUserId();
+    const ctx = await requireRole("editor");
     const supabase = await createClient();
     const invoiceId = str(formData, "invoice_id");
     const amount = num(formData, "amount");
@@ -306,7 +418,8 @@ export async function recordPayment(formData: FormData): Promise<ActionResult> {
     if (!invoice) return { ok: false, error: "Invoice not found." };
 
     await supabase.from("payments").insert({
-      user_id: userId,
+      user_id: ctx.member.user_id,
+      organization_id: ctx.org.id,
       invoice_id: invoiceId,
       amount: Number(amount.toFixed(2)),
       currency: invoice.currency ?? "USD",
@@ -336,15 +449,18 @@ export async function recordPayment(formData: FormData): Promise<ActionResult> {
     revalidatePath("/dashboard");
     revalidatePath("/reports");
     return { ok: true, id: invoiceId };
-  } catch {
-    return { ok: false, error: "Failed to record payment." };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Failed to record payment.",
+    };
   }
 }
 
 // ===================== CLIENTS =====================
 
 export async function createClientAction(formData: FormData) {
-  const userId = await requireUserId();
+  const ctx = await requireRole("editor");
   const supabase = await createClient();
 
   const name = str(formData, "name");
@@ -352,7 +468,8 @@ export async function createClientAction(formData: FormData) {
   if (!name || !email) return;
 
   await supabase.from("clients").insert({
-    user_id: userId,
+    user_id: ctx.member.user_id,
+    organization_id: ctx.org.id,
     name,
     email,
     phone: str(formData, "phone"),
@@ -365,7 +482,7 @@ export async function createClientAction(formData: FormData) {
 }
 
 export async function deleteClient(clientId: string) {
-  await requireUserId();
+  await requireRole("editor");
   const supabase = await createClient();
   await supabase.from("clients").delete().eq("id", clientId);
   revalidatePath("/clients");
@@ -374,7 +491,7 @@ export async function deleteClient(clientId: string) {
 
 export async function updateClient(formData: FormData): Promise<ActionResult> {
   try {
-    await requireUserId();
+    await requireRole("editor");
     const supabase = await createClient();
     const clientId = str(formData, "client_id");
     const name = str(formData, "name");
@@ -398,22 +515,23 @@ export async function updateClient(formData: FormData): Promise<ActionResult> {
     revalidatePath("/clients");
     revalidatePath("/dashboard");
     return { ok: true };
-  } catch {
-    return { ok: false, error: "Failed to update client." };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Failed to update client." };
   }
 }
 
 // ===================== PRODUCTS / INVENTORY =====================
 
 export async function createProductAction(formData: FormData) {
-  const userId = await requireUserId();
+  const ctx = await requireRole("editor");
   const supabase = await createClient();
 
   const name = str(formData, "name");
   if (!name) return;
 
   await supabase.from("products").insert({
-    user_id: userId,
+    user_id: ctx.member.user_id,
+    organization_id: ctx.org.id,
     name,
     description: str(formData, "description"),
     unit_price: num(formData, "unit_price"),
@@ -431,7 +549,7 @@ export async function createProductAction(formData: FormData) {
 }
 
 export async function updateProductStock(productId: string, quantity: number) {
-  await requireUserId();
+  await requireRole("editor");
   const supabase = await createClient();
   await supabase
     .from("products")
@@ -442,7 +560,7 @@ export async function updateProductStock(productId: string, quantity: number) {
 }
 
 export async function toggleProductActive(productId: string, isActive: boolean) {
-  await requireUserId();
+  await requireRole("editor");
   const supabase = await createClient();
   await supabase
     .from("products")
@@ -452,7 +570,7 @@ export async function toggleProductActive(productId: string, isActive: boolean) 
 }
 
 export async function deleteProduct(productId: string) {
-  await requireUserId();
+  await requireRole("editor");
   const supabase = await createClient();
   await supabase.from("products").delete().eq("id", productId);
   revalidatePath("/products");
@@ -485,74 +603,41 @@ export async function updateProfile(formData: FormData) {
 
 // ===================== TEAM =====================
 
-type TeamRole = "admin" | "editor" | "viewer";
-
-async function ensureOrganization(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
-): Promise<string | null> {
-  const { data: existing } = await supabase
-    .from("organizations")
-    .select("id")
-    .eq("owner_id", userId)
-    .maybeSingle();
-  if (existing) return existing.id;
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("company_name,full_name")
-    .eq("id", userId)
-    .single();
-
-  const { data: org, error } = await supabase
-    .from("organizations")
-    .insert({
-      owner_id: userId,
-      name: profile?.company_name || `${profile?.full_name || "My"}'s Business`,
-    })
-    .select("id")
-    .single();
-  if (error) return null;
-  return org.id;
-}
-
 export async function inviteTeamMember(formData: FormData): Promise<ActionResult> {
   try {
-    const userId = await requireUserId();
+    const ctx = await requireRole("admin");
     const supabase = await createClient();
 
     const email = str(formData, "email").toLowerCase();
     const name = str(formData, "name", email.split("@")[0] ?? "Member");
     if (!email.includes("@")) return { ok: false, error: "Enter a valid email." };
 
-    const orgId = await ensureOrganization(supabase, userId);
-    if (!orgId) return { ok: false, error: "Could not create organization." };
-
-    const role = str(formData, "role", "viewer") as TeamRole;
+    const role = str(formData, "role", "viewer");
 
     // Skip duplicates
     const { data: dup } = await supabase
       .from("team_members")
       .select("id")
-      .eq("organization_id", orgId)
+      .eq("organization_id", ctx.org.id)
       .eq("email", email)
       .maybeSingle();
     if (dup) return { ok: false, error: "This person is already on your team." };
 
     const { error } = await supabase.from("team_members").insert({
-      organization_id: orgId,
+      organization_id: ctx.org.id,
+      invited_by: ctx.member.user_id,
       email,
       name,
-      role: ["admin", "editor", "viewer"].includes(role) ? role : "viewer",
+      role: ["owner", "admin", "editor", "viewer"].includes(role) ? role : "viewer",
       department: str(formData, "department"),
-      status: "inactive", // pending until they accept the invite
+      status: "pending",
     });
     if (error) return { ok: false, error: error.message };
 
     revalidatePath("/team");
     return { ok: true };
-  } catch {
-    return { ok: false, error: "Failed to send invite." };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Failed to send invite." };
   }
 }
 
@@ -561,8 +646,22 @@ export async function updateTeamMemberRole(
   role: TeamRole,
 ): Promise<ActionResult> {
   try {
-    await requireUserId();
+    const ctx = await requireRole("admin");
     const supabase = await createClient();
+
+    // Only owners may create/modify other owners
+    if (role === "owner" && ctx.member.role !== "owner")
+      return { ok: false, error: "Only an owner can assign the owner role." };
+
+    // Admins cannot touch owners
+    const { data: member } = await supabase
+      .from("team_members")
+      .select("role")
+      .eq("id", memberId)
+      .single();
+    if (member?.role === "owner" && ctx.member.role !== "owner")
+      return { ok: false, error: "Admins cannot modify the owner." };
+
     const { error } = await supabase
       .from("team_members")
       .update({ role })
@@ -570,15 +669,29 @@ export async function updateTeamMemberRole(
     if (error) return { ok: false, error: error.message };
     revalidatePath("/team");
     return { ok: true };
-  } catch {
-    return { ok: false, error: "Failed to update member." };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Failed to update member." };
   }
 }
 
 export async function removeTeamMember(memberId: string): Promise<ActionResult> {
   try {
-    await requireUserId();
+    const ctx = await requireRole("admin");
     const supabase = await createClient();
+
+    const { data: member } = await supabase
+      .from("team_members")
+      .select("role,user_id")
+      .eq("id", memberId)
+      .single();
+    if (!member) return { ok: false, error: "Member not found." };
+    if (member.role === "owner")
+      return { ok: false, error: "The owner cannot be removed." };
+    if (ctx.member.role !== "owner" && member.role === "admin")
+      return { ok: false, error: "Admins can only remove editors and viewers." };
+    if (member.user_id === ctx.member.user_id)
+      return { ok: false, error: "You cannot remove yourself." };
+
     const { error } = await supabase
       .from("team_members")
       .delete()
@@ -586,7 +699,7 @@ export async function removeTeamMember(memberId: string): Promise<ActionResult> 
     if (error) return { ok: false, error: error.message };
     revalidatePath("/team");
     return { ok: true };
-  } catch {
-    return { ok: false, error: "Failed to remove member." };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Failed to remove member." };
   }
 }

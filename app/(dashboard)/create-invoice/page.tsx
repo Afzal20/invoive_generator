@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { requireOrg } from "@/lib/erp/org";
 import {
   CreateInvoiceForm,
 } from "@/components/erp/create-invoice-form";
@@ -10,23 +11,18 @@ export default async function CreateInvoicePage({
   searchParams: Promise<{ client?: string }>;
 }) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { org, member } = await requireOrg();
   const params = await searchParams;
 
   const [{ data: clients }, { data: products }, { data: profile }, { count }] =
     await Promise.all([
-      supabase.from("clients").select("*").order("name"),
-      supabase.from("products").select("*").order("name"),
-      supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user?.id ?? "")
-        .maybeSingle(),
+      supabase.from("clients").select("*").eq("organization_id", org.id).order("name"),
+      supabase.from("products").select("*").eq("organization_id", org.id).order("name"),
+      supabase.from("profiles").select("*").eq("id", member.user_id ?? "").maybeSingle(),
       supabase
         .from("invoices")
-        .select("id", { count: "exact", head: true }),
+        .select("id", { count: "exact", head: true })
+        .eq("organization_id", org.id),
     ]);
 
   const year = new Date().getFullYear();

@@ -1,8 +1,10 @@
 import { ClientsTable } from "@/components/erp/clients-table"
 import { getClientsWithStats } from "@/lib/erp/queries"
+import { requireOrg } from "@/lib/erp/org"
 
 export default async function ClientsPage() {
-  const clients = await getClientsWithStats()
+  const { org } = await requireOrg()
+  const clients = await getClientsWithStats(org.id)
 
   return (
     <div className="flex flex-1 flex-col">

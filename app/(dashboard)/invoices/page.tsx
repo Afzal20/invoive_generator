@@ -1,8 +1,10 @@
 import { InvoicesTable } from "@/components/erp/invoices-table"
 import { getInvoices } from "@/lib/erp/queries"
+import { requireOrg } from "@/lib/erp/org"
 
 export default async function InvoicesPage() {
-  const invoices = await getInvoices()
+  const { org } = await requireOrg()
+  const invoices = await getInvoices(org.id)
 
   return (
     <div className="flex flex-1 flex-col">

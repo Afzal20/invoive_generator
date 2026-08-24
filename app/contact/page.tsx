@@ -179,7 +179,7 @@ export default function ContactsPage() {
                 <div className="max-w-4xl mx-auto text-center">
                     <h2 className="text-3xl font-bold mb-4">Frequently Asked Questions</h2>
                     <p className="text-lg text-gray-600 mb-8">
-                        Find answers to common questions about Invoice Generator
+                        Find answers to common questions about BizPilot
                     </p>
                     <div className="grid md:grid-cols-2 gap-6 text-left">
                         <Card>

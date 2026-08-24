@@ -11,21 +11,26 @@ export default function HomeComponents() {
     <>
       <div className="flex-1 w-full max-w-6xl mx-auto px-6 flex flex-col items-center justify-start pt-16 pb-12">
         <div className="text-center space-y-6 mb-12">
+          <p className="inline-block rounded-full border border-white/30 bg-white/10 px-4 py-1.5 text-sm font-medium tracking-wide text-blue-100">
+            BizPilot — Your Business, on Autopilot
+          </p>
+
           <h1 className="text-5xl md:text-6xl font-bold leading-tight max-w-4xl mx-auto">
-            Create Professional Invoices in 30 Seconds.
+            Run your whole business from one dashboard.
           </h1>
 
           <h1 className="text-5xl md:text-6xl font-bold leading-tight max-w-4xl mx-auto">
             <span className="bg-gradient-to-r from-[#4ade80] via-[#86efac] to-[#d9f99d] bg-clip-text text-transparent">
-              Powered by AI.
+              On autopilot.
             </span>
           </h1>
 
 
 
           <p className="text-lg md:text-xl text-blue-100 max-w-2xl mx-auto leading-relaxed">
-            No signup required. Beautiful templates. Instant PDF.
-            The fastest way to create and track invoices.
+            Invoices out the door in seconds. Inventory, expenses and payments
+            tracked for you. BizPilot is the mini ERP built for small businesses —
+            no spreadsheets, no chaos.
           </p>
           {/* CTA Buttons */}
           <div className="flex flex-wrap gap-4 justify-center pt-4">
@@ -42,7 +47,7 @@ export default function HomeComponents() {
               className="border-2 border-white text-foreground hover:bg-white/10 px-8"
               asChild
             >
-              <Link href="#how-it-works">See How It Works</Link>
+              <Link href="/get-started">Take the Tour</Link>
             </Button>
           </div>
         </div>

@@ -176,7 +176,7 @@ export default function HelpPage() {
               <CardContent>
                 <div className="flex flex-col gap-3 @xl/main:flex-row">
                   <Button asChild variant="outline" className="flex-1 justify-start gap-2">
-                    <a href="mailto:support@acme.com?subject=Support%20Request">
+                    <a href="mailto:support@bizpilot.app?subject=Support%20Request">
                       <IconMail className="size-4" />
                       Email Support
                     </a>

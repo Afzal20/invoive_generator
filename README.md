@@ -1,12 +1,18 @@
-# Invoice Generator
+# BizPilot
 
-A modern Next.js web application for generating and managing invoices. Built with a clean UI, authentication, and a robust database backend.
+**Your business, on autopilot.**
+
+A mini ERP for small businesses built with Next.js and Supabase. Send professional invoices, manage clients and inventory, track expenses and payments, and see what your business is really earning — all from one dashboard.
 
 ## Features
 
-- **Create Invoices**: Easily create professional invoices with or without logging in.
-- **Dashboard**: Track and manage your invoices efficiently.
-- **Authentication**: Secure Google OAuth authentication via Supabase.
+- **Invoices**: Create, send, and track invoices with or without logging in. Partial payments supported.
+- **Clients**: A lightweight CRM with lifetime value and outstanding balances per client.
+- **Products & Inventory**: Product catalog with SKU, stock tracking, and low-stock alerts.
+- **Expenses**: Categorize spending and see net profit at a glance.
+- **Reports**: Revenue vs. expenses over time, expense breakdowns by category, top clients.
+- **Team**: Invite members with admin/editor/viewer roles.
+- **Authentication**: Secure email + Google OAuth authentication via Supabase.
 - **PDF Generation**: Generate downloadable PDF invoices on the fly.
 - **Responsive Design**: Clean and dynamic interface built with Tailwind CSS and Radix UI.
 

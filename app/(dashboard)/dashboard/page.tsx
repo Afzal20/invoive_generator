@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/table"
 import { RevenueExpenseChart } from "@/components/dashboard/revenue-expense-chart"
 import { getDashboardStats } from "@/lib/erp/queries"
+import { requireOrg } from "@/lib/erp/org"
 import { formatCurrency, formatDate } from "@/lib/erp/format"
 
 const statusStyles: Record<string, string> = {
@@ -40,7 +41,8 @@ const statusStyles: Record<string, string> = {
 }
 
 export default async function DashboardPage() {
-  const stats = await getDashboardStats()
+  const { org } = await requireOrg()
+  const stats = await getDashboardStats(org.id)
 
   return (
     <div className="flex flex-1 flex-col">

@@ -26,6 +26,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getInvoice } from "@/lib/erp/queries";
+import { requireOrg } from "@/lib/erp/org";
 import { formatCurrency, formatDate, getInitials } from "@/lib/erp/format";
 import { PAYMENT_METHODS } from "@/lib/erp/types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -52,8 +53,10 @@ async function InvoiceDetailLoader({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const { org } = await requireOrg();
   const invoice = await getInvoice(id);
-  if (!invoice) notFound();
+  // Org isolation: a valid id from another organization must 404
+  if (!invoice || invoice.organization_id !== org.id) notFound();
 
   const balance = Math.max(
     0,

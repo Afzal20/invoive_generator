@@ -6,6 +6,7 @@ import {
   IconAlertTriangle,
   IconPackage,
   IconPlus,
+  IconSparkles,
   IconTrash,
 } from "@tabler/icons-react";
 import { toast } from "sonner";
@@ -20,6 +21,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -38,6 +47,7 @@ import {
   createInvoiceAction,
   type CreateInvoiceInput,
 } from "@/app/(dashboard)/actions";
+import { generateInvoiceItems } from "@/app/(dashboard)/ai-actions";
 
 interface ItemRow {
   key: string;
@@ -111,6 +121,7 @@ export function CreateInvoiceForm({
   const [terms, setTerms] = React.useState(profile?.default_terms ?? "");
 
   const [items, setItems] = React.useState<ItemRow[]>([newRow()]);
+  const [aiOpen, setAiOpen] = React.useState(false);
 
   function handleClientChange(value: string) {
     setClientId(value === "none" ? "" : value);
@@ -276,28 +287,39 @@ export function CreateInvoiceForm({
             <div>
               <CardTitle>Line Items</CardTitle>
               <CardDescription>
-                Add from your catalog or write custom lines.
+                Add from your catalog, write custom lines, or let AI draft them.
               </CardDescription>
             </div>
-            <Select value="" onValueChange={addFromCatalog}>
-              <SelectTrigger size="sm" className="w-[200px]">
-                <IconPackage className="size-4 text-muted-foreground" />
-                <SelectValue placeholder="Add from catalog" />
-              </SelectTrigger>
-              <SelectContent>
-                {products.length === 0 && (
-                  <div className="px-3 py-2 text-sm text-muted-foreground">
-                    No products yet.
-                  </div>
-                )}
-                {products.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name} · {formatCurrency(Number(p.unit_price), p.currency)}
-                    {p.track_stock ? ` · ${p.stock_quantity} in stock` : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setAiOpen(true)}
+              >
+                <IconSparkles className="size-4" />
+                Generate with AI
+              </Button>
+              <Select value="" onValueChange={addFromCatalog}>
+                <SelectTrigger size="sm" className="w-[200px]">
+                  <IconPackage className="size-4 text-muted-foreground" />
+                  <SelectValue placeholder="Add from catalog" />
+                </SelectTrigger>
+                <SelectContent>
+                  {products.length === 0 && (
+                    <div className="px-3 py-2 text-sm text-muted-foreground">
+                      No products yet.
+                    </div>
+                  )}
+                  {products.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name} · {formatCurrency(Number(p.unit_price), p.currency)}
+                      {p.track_stock ? ` · ${p.stock_quantity} in stock` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             {items.map((row) => {
@@ -537,6 +559,84 @@ export function CreateInvoiceForm({
           </CardFooter>
         </Card>
       </div>
+
+      <AiItemsDialog
+        open={aiOpen}
+        onOpenChange={setAiOpen}
+        currency={currency}
+        onGenerated={(generated) => {
+          setItems((prev) => [
+            ...prev.filter((r) => r.description.trim() !== ""),
+            ...generated.map((it) =>
+              newRow({
+                description: it.description,
+                quantity: it.quantity,
+                rate: it.rate,
+              }),
+            ),
+          ]);
+        }}
+      />
     </div>
+  );
+}
+
+function AiItemsDialog({
+  open,
+  onOpenChange,
+  currency,
+  onGenerated,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  currency: string;
+  onGenerated: (items: { description: string; quantity: number; rate: number }[]) => void;
+}) {
+  const [prompt, setPrompt] = React.useState("");
+  const [loading, setLoading] = React.useState(false);
+
+  async function handleGenerate() {
+    setLoading(true);
+    try {
+      const res = await generateInvoiceItems(prompt, currency);
+      if (!res.ok || !res.items || res.items.length === 0) {
+        toast.error(res.error ?? "The AI returned nothing useful. Try rephrasing.");
+        return;
+      }
+      onGenerated(res.items);
+      toast.success(`${res.items.length} line item${res.items.length === 1 ? "" : "s"} generated.`);
+      setPrompt("");
+      onOpenChange(false);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <IconSparkles className="size-4" />
+            Generate Line Items
+          </DialogTitle>
+          <DialogDescription>
+            Describe what you&apos;d like to bill in plain language.
+          </DialogDescription>
+        </DialogHeader>
+        <Textarea
+          rows={4}
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          maxLength={600}
+          placeholder={`e.g. 12 hours of website design work, plus a logo redesign for ${currency === "USD" ? "$300" : "300"}, and monthly hosting for a year`}
+        />
+        <DialogFooter>
+          <Button onClick={handleGenerate} disabled={loading || prompt.trim().length < 4}>
+            {loading ? "Thinking..." : "Generate Items"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

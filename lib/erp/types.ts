@@ -83,6 +83,7 @@ export interface InvoiceItem {
 
 export interface Invoice {
   id: string;
+  organization_id: string;
   client_id: string | null;
   invoice_number: string;
   status: InvoiceStatus;
@@ -112,16 +113,30 @@ export interface InvoiceWithItems extends Invoice {
   payments: Payment[];
 }
 
+export type TeamRole = "owner" | "admin" | "editor" | "viewer";
+
+export const ROLE_LABELS: Record<TeamRole, string> = {
+  owner: "Owner",
+  admin: "Admin",
+  editor: "Editor",
+  viewer: "Viewer",
+};
+
 export interface Organization {
   id: string;
   name: string;
   owner_id: string;
   logo_url: string;
   website: string;
+  company_email: string;
+  company_address: string;
+  company_phone: string;
+  default_currency: string;
+  default_tax_rate: number;
+  default_notes: string;
+  default_terms: string;
   created_at: string;
 }
-
-export type TeamRole = "admin" | "editor" | "viewer";
 
 export interface TeamMember {
   id: string;
@@ -131,7 +146,7 @@ export interface TeamMember {
   name: string;
   role: TeamRole;
   department: string;
-  status: "active" | "inactive";
+  status: "active" | "pending";
   invited_at: string | null;
   joined_at: string | null;
   created_at: string;

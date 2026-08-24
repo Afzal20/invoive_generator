@@ -1,8 +1,10 @@
 import { ExpensesView } from "@/components/erp/expenses-view"
 import { getExpenses } from "@/lib/erp/queries"
+import { requireOrg } from "@/lib/erp/org"
 
 export default async function ExpensesPage() {
-  const expenses = await getExpenses()
+  const { org } = await requireOrg()
+  const expenses = await getExpenses(org.id)
 
   return (
     <div className="flex flex-1 flex-col">

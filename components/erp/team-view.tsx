@@ -1,12 +1,13 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import {
   IconBuildingStore,
+  IconCrown,
   IconDots,
   IconMail,
   IconPlus,
-  IconShieldCheck,
   IconTrash,
   IconUsers,
 } from "@tabler/icons-react";
@@ -49,35 +50,52 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import type { Organization, Profile, TeamMember, TeamRole } from "@/lib/erp/types";
 import { formatDate, getInitials } from "@/lib/erp/format";
 import {
   inviteTeamMember,
   removeTeamMember,
+  updateOrganization,
   updateTeamMemberRole,
 } from "@/app/(dashboard)/actions";
 
 const roleColors: Record<string, string> = {
+  owner: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300",
   admin: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
   editor: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
   viewer: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
 };
 
+const ROLE_ORDER: TeamRole[] = ["owner", "admin", "editor", "viewer"];
+
+function rank(role: TeamRole) {
+  return ROLE_ORDER.indexOf(role);
+}
+
 export function TeamView({
   organization,
   members,
   profile,
+  myRole,
 }: {
   organization: Organization | null;
   members: TeamMember[];
   profile: Profile | null;
+  myRole: TeamRole;
 }) {
   const [inviteOpen, setInviteOpen] = React.useState(false);
   const [busyId, setBusyId] = React.useState<string | null>(null);
 
-  const pendingCount = members.filter((m) => m.status === "inactive").length;
+  const canManage = rank(myRole) >= rank("admin");
+  const pendingCount = members.filter((m) => m.status === "pending").length;
 
-  async function run(memberId: string, fn: () => Promise<{ ok: boolean; error?: string }>, msg: string) {
+  async function run(
+    memberId: string,
+    fn: () => Promise<{ ok: boolean; error?: string }>,
+    msg: string,
+  ) {
     setBusyId(memberId);
     try {
       const res = await fn();
@@ -87,6 +105,10 @@ export function TeamView({
       setBusyId(null);
     }
   }
+
+  // Roles a member may be assigned to, given MY role
+  const assignableRoles: TeamRole[] =
+    myRole === "owner" ? ["owner", "admin", "editor", "viewer"] : ["admin", "editor", "viewer"];
 
   return (
     <div className="flex flex-col gap-4 md:gap-6">
@@ -100,9 +122,9 @@ export function TeamView({
             </CardTitle>
           </CardHeader>
           <CardFooter className="text-sm text-muted-foreground">
-            <span className="flex items-center gap-1.5">
+            <span className="flex items-center gap-1.5 capitalize">
               <IconBuildingStore className="size-4" />
-              Owned by you
+              Your role: {myRole}
             </span>
           </CardFooter>
         </Card>
@@ -110,7 +132,7 @@ export function TeamView({
           <CardHeader>
             <CardDescription>Members</CardDescription>
             <CardTitle className="text-2xl font-semibold tabular-nums">
-              {members.length + 1}
+              {members.length}
             </CardTitle>
           </CardHeader>
           <CardFooter className="text-sm text-muted-foreground">
@@ -124,13 +146,19 @@ export function TeamView({
         </Card>
         <Card>
           <CardHeader>
-            <CardDescription>Roles</CardDescription>
-            <CardTitle className="text-2xl font-semibold tabular-nums">
-              {new Set(members.map((m) => m.role)).size + 1}
+            <CardDescription>Your Access</CardDescription>
+            <CardTitle className="text-2xl font-semibold capitalize">
+              {myRole}
             </CardTitle>
           </CardHeader>
-          <CardFooter className="text-sm text-muted-foreground">
-            Admins manage everything, editors create, viewers read-only.
+          <CardFooter className="flex-col items-start gap-1 text-sm text-muted-foreground">
+            <span>
+              {canManage
+                ? "You can invite members and manage roles."
+                : rank(myRole) >= rank("editor")
+                  ? "You can create and edit business data."
+                  : "Read-only access."}
+            </span>
           </CardFooter>
         </Card>
       </div>
@@ -146,23 +174,18 @@ export function TeamView({
                   {getInitials(profile?.full_name || "Me")}
                 </AvatarFallback>
               </Avatar>
-              <div>
+              <div className="min-w-0">
                 <p className="font-medium">{profile?.full_name || "You"}</p>
-                <p className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <IconMail className="size-3" />
+                <p className="flex items-center gap-1 truncate text-sm text-muted-foreground">
+                  <IconMail className="size-3 shrink-0" />
                   {profile?.company_email || "Add email in Settings"}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Badge className={roleColors.admin} variant="secondary">
-                <IconShieldCheck className="size-3" />
-                Owner
-              </Badge>
-              <Badge variant="outline" className="capitalize">
-                active
-              </Badge>
-            </div>
+            <Badge className={roleColors.owner} variant="secondary">
+              <IconCrown className="size-3" />
+              Owner
+            </Badge>
           </CardContent>
         </Card>
       </div>
@@ -171,22 +194,24 @@ export function TeamView({
       <div>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold">Team Members</h2>
-          <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <IconPlus className="size-4" />
-                Invite Member
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <InviteForm
-                onDone={() => {
-                  setInviteOpen(false);
-                  toast.success("Invitation saved.");
-                }}
-              />
-            </DialogContent>
-          </Dialog>
+          {canManage && (
+            <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm">
+                  <IconPlus className="size-4" />
+                  Invite Member
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <InviteForm
+                  onDone={() => {
+                    setInviteOpen(false);
+                    toast.success("Invitation saved — they'll join automatically when they sign up with this email.");
+                  }}
+                />
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
 
         {members.length === 0 ? (
@@ -198,10 +223,6 @@ export function TeamView({
                 Invite colleagues to help manage invoices, clients, inventory,
                 and expenses.
               </p>
-              <Button size="sm" className="mt-2" onClick={() => setInviteOpen(true)}>
-                <IconPlus className="size-4" />
-                Invite your first member
-              </Button>
             </CardContent>
           </Card>
         ) : (
@@ -224,55 +245,58 @@ export function TeamView({
                         </p>
                       </div>
                     </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8 shrink-0"
-                          disabled={busyId === member.id}
-                        >
-                          <IconDots className="size-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Change role</DropdownMenuLabel>
-                        {(["admin", "editor", "viewer"] as TeamRole[]).map((r) => (
+                    {canManage && member.role !== "owner" && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 shrink-0"
+                            disabled={busyId === member.id}
+                          >
+                            <IconDots className="size-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Change role</DropdownMenuLabel>
+                          {assignableRoles.map((r) => (
+                            <DropdownMenuItem
+                              key={r}
+                              disabled={r === member.role}
+                              onClick={() =>
+                                run(
+                                  member.id,
+                                  () => updateTeamMemberRole(member.id, r),
+                                  `Role updated.`,
+                                )
+                              }
+                              className="capitalize"
+                            >
+                              {r}
+                              {r === member.role ? " ✓" : ""}
+                            </DropdownMenuItem>
+                          ))}
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            key={r}
-                            disabled={r === member.role}
+                            className="text-destructive"
                             onClick={() =>
                               run(
                                 member.id,
-                                () => updateTeamMemberRole(member.id, r),
-                                `Role updated.`,
+                                () => removeTeamMember(member.id),
+                                "Member removed.",
                               )
                             }
-                            className="capitalize"
                           >
-                            {r}
-                            {r === member.role ? " ✓" : ""}
+                            <IconTrash className="size-4" />
+                            Remove
                           </DropdownMenuItem>
-                        ))}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() =>
-                            run(
-                              member.id,
-                              () => removeTeamMember(member.id),
-                              "Member removed.",
-                            )
-                          }
-                        >
-                          <IconTrash className="size-4" />
-                          Remove
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </div>
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     <Badge className={roleColors[member.role]} variant="secondary">
+                      {member.role === "owner" && <IconCrown className="size-3" />}
                       {member.role}
                     </Badge>
                     {member.department && (
@@ -298,7 +322,97 @@ export function TeamView({
           </div>
         )}
       </div>
+
+      {/* Organization settings (admins only) */}
+      {organization && canManage && (
+        <>
+          <Separator className="my-4" />
+          <OrgSettingsCard organization={organization} />
+        </>
+      )}
     </div>
+  );
+}
+
+function OrgSettingsCard({ organization }: { organization: Organization }) {
+  const router = useRouter();
+  const [saving, setSaving] = React.useState(false);
+  const [saved, setSaved] = React.useState(false);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setSaving(true);
+    setSaved(false);
+    try {
+      const fd = new FormData(e.currentTarget);
+      const res = await updateOrganization(fd);
+      if (!res.ok) {
+        toast.error(res.error ?? "Failed to save.");
+        return;
+      }
+      toast.success("Organization updated.");
+      setSaved(true);
+      router.refresh();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <Card>
+        <CardHeader>
+          <CardTitle>Organization Settings</CardTitle>
+          <CardDescription>
+            These details appear on every invoice this organization sends.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-2">
+            <Label htmlFor="org_name">Business Name</Label>
+            <Input id="org_name" name="name" defaultValue={organization.name} required maxLength={80} />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="org_email">Email</Label>
+            <Input id="org_email" name="company_email" type="email" defaultValue={organization.company_email ?? ""} placeholder="billing@company.com" />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="org_phone">Phone</Label>
+            <Input id="org_phone" name="company_phone" defaultValue={organization.company_phone ?? ""} />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="org_currency">Currency</Label>
+              <Input id="org_currency" name="default_currency" defaultValue={organization.default_currency ?? "USD"} maxLength={3} />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="org_tax">Default Tax %</Label>
+              <Input id="org_tax" name="default_tax_rate" type="number" step="0.01" min="0" defaultValue={organization.default_tax_rate ?? 0} />
+            </div>
+          </div>
+          <div className="grid gap-2 md:col-span-2">
+            <Label htmlFor="org_address">Address</Label>
+            <Textarea id="org_address" name="company_address" rows={2} defaultValue={organization.company_address ?? ""} />
+          </div>
+          <div className="grid gap-2 md:col-span-2">
+            <Label htmlFor="org_notes">Default Invoice Notes</Label>
+            <Textarea id="org_notes" name="default_notes" rows={2} defaultValue={organization.default_notes ?? ""} />
+          </div>
+          <div className="grid gap-2 md:col-span-2">
+            <Label htmlFor="org_terms">Default Terms</Label>
+            <Textarea id="org_terms" name="default_terms" rows={2} defaultValue={organization.default_terms ?? ""} />
+          </div>
+        </CardContent>
+        <CardFooter className="justify-end gap-3">
+          {saved && (
+            <span className="text-sm text-muted-foreground">Saved.</span>
+          )}
+          <Button type="submit" disabled={saving}>
+            {saving ? "Saving..." : "Save Organization"}
+          </Button>
+        </CardFooter>
+      </Card>
+    </form>
   );
 }
 
@@ -326,8 +440,7 @@ function InviteForm({ onDone }: { onDone: () => void }) {
       <DialogHeader>
         <DialogTitle>Invite Team Member</DialogTitle>
         <DialogDescription>
-          They&apos;ll be added to your organization. You can change their role
-          anytime.
+          They&apos;ll be added as soon as they sign up or log in with this email.
         </DialogDescription>
       </DialogHeader>
       <div className="grid gap-4 py-4">
@@ -353,19 +466,15 @@ function InviteForm({ onDone }: { onDone: () => void }) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="editor">Editor</SelectItem>
-                <SelectItem value="viewer">Viewer</SelectItem>
+                <SelectItem value="admin">Admin — manage everything & team</SelectItem>
+                <SelectItem value="editor">Editor — create & edit data</SelectItem>
+                <SelectItem value="viewer">Viewer — read-only</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="grid gap-2">
             <Label htmlFor="member_department">Department</Label>
-            <Input
-              id="member_department"
-              name="department"
-              placeholder="Sales"
-            />
+            <Input id="member_department" name="department" placeholder="Sales" />
           </div>
         </div>
       </div>

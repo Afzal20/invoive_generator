@@ -10,6 +10,7 @@ const Navbar = () => {
     <nav className="fixed top-2 inset-x-4 h-16 bg-background border max-w-(--breakpoint-xl) mx-auto rounded-full z-50">
       <div className="h-full flex items-center justify-between mx-auto px-4">
         <Logo />
+        <span className="text-lg font-bold tracking-tight">BizPilot</span>
         <NavMenu className="hidden md:block" />
 
         <div className="flex items-center gap-3">
