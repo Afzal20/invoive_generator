@@ -44,7 +44,7 @@ const statusStyles: Record<string, string> = {
   cancelled: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
 }
 
-export function InvoicesTable({ invoices }: { invoices: Invoice[] }) {
+export function InvoicesTable({ invoices, canCreate = true }: { invoices: Invoice[], canCreate?: boolean }) {
   const [search, setSearch] = React.useState("")
   const [pendingId, setPendingId] = React.useState<string | null>(null)
 
@@ -131,12 +131,14 @@ export function InvoicesTable({ invoices }: { invoices: Invoice[] }) {
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
-              <Button asChild size="sm">
-                <Link href="/create-invoice">
-                  <IconPlus className="size-4" />
-                  New Invoice
-                </Link>
-              </Button>
+              {canCreate && (
+                <Button asChild size="sm">
+                  <Link href="/create-invoice">
+                    <IconPlus className="size-4" />
+                    New Invoice
+                  </Link>
+                </Button>
+              )}
             </div>
           </div>
 

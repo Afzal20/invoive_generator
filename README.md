@@ -39,8 +39,8 @@ A mini ERP for small businesses built with Next.js and Supabase. Send profession
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/Afzal20/invoive_generator.git
-   cd invoive_generator
+   git clone https://github.com/Afzal20/bizpilot.git
+   cd bizpilot
    ```
 
 2. **Install dependencies:**
@@ -113,6 +113,15 @@ This project uses [Supabase](https://supabase.com/) for its database and authent
    npx supabase link --project-ref <your-project-ref>
    npx supabase db push
    ```
+
+## Roadmap
+
+The following are known gaps that will be addressed in future releases. Honest transparency helps clients make informed decisions.
+
+- **Payment gateway**: The pricing page describes subscription tiers, but no Stripe or other payment processor is integrated yet. Billing is currently manual.
+- **Single currency default**: Invoices store a currency field per invoice, but there is no automatic currency conversion or multi-currency reporting. All dashboard totals are summed as-is.
+- **Team invite emails**: Inviting a teammate creates a pending record in the database, but no email is sent (no SMTP/transactional email provider configured yet). Invite links must be shared manually.
+- **Email invoice delivery**: PDF invoices can be downloaded, but "send invoice by email" is a UI affordance not yet wired to an email backend.
 
 ## License
 

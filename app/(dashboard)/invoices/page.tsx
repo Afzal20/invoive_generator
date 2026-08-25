@@ -3,8 +3,11 @@ import { getInvoices } from "@/lib/erp/queries"
 import { requireOrg } from "@/lib/erp/org"
 
 export default async function InvoicesPage() {
-  const { org } = await requireOrg()
+  const { org, member } = await requireOrg()
   const invoices = await getInvoices(org.id)
+  
+  const { roleAtLeast } = await import("@/lib/erp/org")
+  const canCreate = roleAtLeast(member.role, "editor")
 
   return (
     <div className="flex flex-1 flex-col">
@@ -16,7 +19,7 @@ export default async function InvoicesPage() {
               Track billing, payments, and outstanding balances.
             </p>
           </div>
-          <InvoicesTable invoices={invoices} />
+          <InvoicesTable invoices={invoices} canCreate={canCreate} />
         </div>
       </div>
     </div>
