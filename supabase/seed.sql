@@ -29,7 +29,7 @@ insert into auth.users (
   email, encrypted_password,
   email_confirmed_at, created_at, updated_at,
   raw_app_meta_data, raw_user_meta_data,
-  confirmation_token, recovery_token, email_change_token_new,
+  confirmation_token, recovery_token, email_change_token_new, email_change,
   is_sso_user, is_anonymous
 ) values (
   '00000000-0000-0000-0000-000000000001',
@@ -37,11 +37,11 @@ insert into auth.users (
   'authenticated', 'authenticated',
   'demo@bizpilot.app',
   -- password: demo1234  (bcrypt)
-  '$2a$10$PfFiXzVkVyBP9vkDq8yRGOuBizk6C8D1K2LBaP4vp0oHtmMbQy6D6',
+  '$2b$12$.LF2C/H97ILFa8CtnkFUieMFVcNHiz9/RCu7mdhKA60uYD5amQ3WC',
   now(), now(), now(),
   '{"provider":"email","providers":["email"]}',
   '{"full_name":"Alex Morgan"}',
-  '', '', '',
+  '', '', '', '',
   false, false
 ) on conflict (id) do nothing;
 

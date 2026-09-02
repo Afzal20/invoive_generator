@@ -158,6 +158,8 @@ export async function createExpense(formData: FormData) {
   revalidatePath("/expenses");
   revalidatePath("/dashboard");
   revalidatePath("/reports");
+  const { redirect } = await import("next/navigation");
+  redirect("/expenses");
 }
 
 export async function updateExpense(formData: FormData) {
@@ -507,6 +509,9 @@ export async function createClientAction(formData: FormData) {
 
   revalidatePath("/clients");
   revalidatePath("/dashboard");
+  
+  const { redirect } = await import("next/navigation");
+  redirect("/clients");
 }
 
 export async function deleteClient(clientId: string) {
@@ -574,6 +579,8 @@ export async function createProductAction(formData: FormData) {
 
   revalidatePath("/products");
   revalidatePath("/dashboard");
+  const { redirect } = await import("next/navigation");
+  redirect("/products");
 }
 
 export async function updateProductStock(productId: string, quantity: number) {
