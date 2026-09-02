@@ -44,6 +44,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import type { Expense } from "@/lib/erp/types"
 import { EXPENSE_CATEGORIES, PAYMENT_METHODS } from "@/lib/erp/types"
 import { formatCurrency, formatDate } from "@/lib/erp/format"
@@ -54,6 +64,7 @@ export function ExpensesView({ expenses }: { expenses: Expense[] }) {
   const [categoryFilter, setCategoryFilter] = React.useState<string>("all")
   const [open, setOpen] = React.useState(false)
   const [pendingId, setPendingId] = React.useState<string | null>(null)
+  const [deleteId, setDeleteId] = React.useState<string | null>(null)
 
   const filtered = expenses.filter((e) => {
     const matchesSearch =
@@ -302,7 +313,7 @@ export function ExpensesView({ expenses }: { expenses: Expense[] }) {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
-                              onClick={() => handleDelete(expense.id)}
+                              onClick={() => setDeleteId(expense.id)}
                               className="text-destructive"
                             >
                               <IconTrash className="size-4" />
@@ -319,6 +330,29 @@ export function ExpensesView({ expenses }: { expenses: Expense[] }) {
           </CardContent>
         </Card>
       </div>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the expense record.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteId) handleDelete(deleteId)
+                setDeleteId(null)
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }
