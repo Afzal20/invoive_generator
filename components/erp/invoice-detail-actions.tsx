@@ -22,6 +22,16 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -86,6 +96,7 @@ export function InvoiceDetailActions({ invoice }: { invoice: InvoiceWithItems })
   const router = useRouter();
   const [busy, setBusy] = React.useState(false);
   const [payOpen, setPayOpen] = React.useState(false);
+  const [deleteOpen, setDeleteOpen] = React.useState(false);
 
   const balance = Math.max(0, Number(invoice.total) - Number(invoice.paid_amount));
 
@@ -170,7 +181,7 @@ export function InvoiceDetailActions({ invoice }: { invoice: InvoiceWithItems })
               </DropdownMenuItem>
             ))}
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleDelete} className="text-destructive">
+          <DropdownMenuItem onClick={() => setDeleteOpen(true)} className="text-destructive">
             <IconTrash className="size-4" />
             Delete Invoice
           </DropdownMenuItem>
@@ -185,6 +196,29 @@ export function InvoiceDetailActions({ invoice }: { invoice: InvoiceWithItems })
         <IconArrowLeft className="size-4" />
         Back
       </Button>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the invoice.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                setDeleteOpen(false)
+                handleDelete()
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -31,6 +31,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { Invoice } from "@/lib/erp/types"
 import { formatCurrency, formatDate } from "@/lib/erp/format"
@@ -47,6 +57,7 @@ const statusStyles: Record<string, string> = {
 export function InvoicesTable({ invoices, canCreate = true }: { invoices: Invoice[], canCreate?: boolean }) {
   const [search, setSearch] = React.useState("")
   const [pendingId, setPendingId] = React.useState<string | null>(null)
+  const [deleteId, setDeleteId] = React.useState<string | null>(null)
 
   const filtered = invoices.filter(
     (inv) =>
@@ -232,13 +243,13 @@ export function InvoicesTable({ invoices, canCreate = true }: { invoices: Invoic
                                         Mark as Paid
                                       </DropdownMenuItem>
                                     )}
-                                    <DropdownMenuItem
-                                      onClick={() => handleDelete(invoice.id)}
-                                      className="text-destructive"
-                                    >
-                                      <IconTrash className="size-4" />
-                                      Delete
-                                    </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={() => setDeleteId(invoice.id)}
+                                        className="text-destructive"
+                                      >
+                                        <IconTrash className="size-4" />
+                                        Delete
+                                      </DropdownMenuItem>
                                   </DropdownMenuContent>
                                 </DropdownMenu>
                               </TableCell>
@@ -254,6 +265,29 @@ export function InvoicesTable({ invoices, canCreate = true }: { invoices: Invoic
           )}
         </Tabs>
       </div>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the invoice.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteId) handleDelete(deleteId)
+                setDeleteId(null)
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }
