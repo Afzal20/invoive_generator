@@ -33,6 +33,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { ClientWithStats } from "@/lib/erp/types"
 import { formatCurrency, getInitials } from "@/lib/erp/format"
@@ -41,6 +51,7 @@ import { deleteClient } from "@/app/(dashboard)/actions"
 export function ClientsTable({ clients }: { clients: ClientWithStats[] }) {
   const [search, setSearch] = React.useState("")
   const [pendingId, setPendingId] = React.useState<string | null>(null)
+  const [deleteId, setDeleteId] = React.useState<string | null>(null)
 
   const filtered = clients.filter(
     (c) =>
@@ -227,7 +238,7 @@ export function ClientsTable({ clients }: { clients: ClientWithStats[] }) {
                                     </Link>
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
-                                    onClick={() => handleDelete(client.id)}
+                                    onClick={() => setDeleteId(client.id)}
                                     className="text-destructive"
                                   >
                                     <IconTrash className="size-4" />
@@ -247,6 +258,29 @@ export function ClientsTable({ clients }: { clients: ClientWithStats[] }) {
           ))}
         </Tabs>
       </div>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the client and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteId) handleDelete(deleteId)
+                setDeleteId(null)
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }
