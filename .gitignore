@@ -33,6 +33,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*.local
 .env
+.env.development
+.env.production
+.env.staging
 
 # vercel
 .vercel
@@ -40,4 +43,49 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# supabase
 supabase/.temp
+supabase/.branches
+
+# server logs
+*.log
+server.log
+logs/
+
+# playwright
+test-results/
+playwright-report/
+blob-report/
+.playwright/
+
+# selenium
+tests/selenium/screenshots/
+tests/selenium/setup.sh
+
+# ide
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# os
+Thumbs.db
+.DS_Store
+._*
+
+# sensitive files
+opencode.json
+
+# build artifacts
+dist/
+.cache/
+
+# debug files
+*.debug
+*.map
+
+
+SaaS_REPORT.md
+TECHNICAL_ANALYSIS.md
