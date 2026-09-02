@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 
-import { createClient } from "@/lib/supabase/client"
 import {
   IconFileInvoice,
   IconSearch,
@@ -23,6 +22,7 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { searchWorkspaceData } from "../actions"
 
 type SearchResult = {
   id: string
@@ -66,69 +66,51 @@ export default function SearchPage() {
     let isMounted = true
 
     const loadResults = async () => {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      try {
+        const { clientsData, productsData, invoicesData, teamData } = await searchWorkspaceData()
 
-      if (!user || !isMounted) return
+        if (!isMounted) return
 
-      const [{ data: organizationData }, { data: clientsData }, { data: productsData }, { data: invoicesData }] =
-        await Promise.all([
-          supabase.from("organizations").select("id").eq("owner_id", user.id).limit(1),
-          supabase.from("clients").select("id, name, email, status").eq("user_id", user.id).order("name"),
-          supabase.from("products").select("id, name, description, unit_price, category").eq("user_id", user.id).order("name"),
-          supabase.from("invoices").select("id, invoice_number, status, total, client_name").eq("user_id", user.id).order("issue_date", { ascending: false }),
-        ])
-
-      let teamResults: SearchResult[] = []
-
-      if (organizationData?.[0]?.id) {
-        const { data: teamData } = await supabase
-          .from("team_members")
-          .select("id, name, email, role, department, status")
-          .eq("organization_id", organizationData[0].id)
-          .order("name")
-
-        teamResults = (teamData ?? []).map((member) => ({
+        const teamResults: SearchResult[] = (teamData ?? []).map((member) => ({
           id: member.id,
           type: "team",
           title: member.name,
           subtitle: `${member.role} · ${member.email}`,
           route: "/team",
         }))
-      }
 
-      const clientResults = (clientsData ?? []).map((client) => ({
-        id: client.id,
-        type: "client" as const,
-        title: client.name,
-        subtitle: `${client.email} · ${client.status}`,
-        route: "/clients",
-      }))
+        const clientResults: SearchResult[] = (clientsData ?? []).map((client) => ({
+          id: client.id,
+          type: "client",
+          title: client.name,
+          subtitle: `${client.email} · ${client.status}`,
+          route: "/clients",
+        }))
 
-      const productResults = (productsData ?? []).map((product) => ({
-        id: product.id,
-        type: "product" as const,
-        title: product.name,
-        subtitle: `${product.category || "General"} · ${product.description || "No description"}`,
-        route: "/products",
-      }))
+        const productResults: SearchResult[] = (productsData ?? []).map((product) => ({
+          id: product.id,
+          type: "product",
+          title: product.name,
+          subtitle: `${product.category || "General"} · ${product.description || "No description"}`,
+          route: "/products",
+        }))
 
-      const invoiceResults = (invoicesData ?? []).map((invoice) => ({
-        id: invoice.id,
-        type: "invoice" as const,
-        title: invoice.invoice_number,
-        subtitle: `${invoice.client_name || "Client"} · $${Number(invoice.total ?? 0).toFixed(2)}`,
-        meta: invoice.status ? invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1) : undefined,
-        route: "/invoices",
-      }))
+        const invoiceResults: SearchResult[] = (invoicesData ?? []).map((invoice) => ({
+          id: invoice.id,
+          type: "invoice",
+          title: invoice.invoice_number,
+          subtitle: `${invoice.client_name || "Client"} · $${Number(invoice.total ?? 0).toFixed(2)}`,
+          meta: invoice.status ? invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1) : undefined,
+          route: `/invoices/${invoice.id}`,
+        }))
 
-      const nextResults = [...clientResults, ...productResults, ...invoiceResults, ...teamResults]
+        const nextResults = [...clientResults, ...productResults, ...invoiceResults, ...teamResults]
 
-      if (isMounted) {
         setAllResults(nextResults)
-        setLoading(false)
+      } catch (e) {
+        console.error("Failed to fetch search data", e)
+      } finally {
+        if (isMounted) setLoading(false)
       }
     }
 

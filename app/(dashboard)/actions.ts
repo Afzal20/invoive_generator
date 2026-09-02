@@ -703,3 +703,41 @@ export async function removeTeamMember(memberId: string): Promise<ActionResult> 
     return { ok: false, error: err instanceof Error ? err.message : "Failed to remove member." };
   }
 }
+
+// ===================== SEARCH =====================
+
+export async function searchWorkspaceData() {
+  const ctx = await requireRole("viewer");
+  const supabase = await createClient();
+
+  const [
+    { data: clientsData },
+    { data: productsData },
+    { data: invoicesData },
+    { data: teamData },
+  ] = await Promise.all([
+    supabase
+      .from("clients")
+      .select("id, name, email, status")
+      .eq("organization_id", ctx.org.id)
+      .order("name"),
+    supabase
+      .from("products")
+      .select("id, name, description, unit_price, category")
+      .eq("organization_id", ctx.org.id)
+      .order("name"),
+    supabase
+      .from("invoices")
+      .select("id, invoice_number, status, total, client_name")
+      .eq("organization_id", ctx.org.id)
+      .order("issue_date", { ascending: false }),
+    supabase
+      .from("team_members")
+      .select("id, name, email, role, department, status")
+      .eq("organization_id", ctx.org.id)
+      .order("name"),
+  ]);
+
+  return { clientsData, productsData, invoicesData, teamData };
+}
+
