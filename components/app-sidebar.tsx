@@ -74,6 +74,11 @@ const data = {
       icon: IconSettings,
     },
     {
+      title: "Billing",
+      url: "/settings/billing",
+      icon: IconReceipt,
+    },
+    {
       title: "Get Help",
       url: "/help",
       icon: IconHelp,

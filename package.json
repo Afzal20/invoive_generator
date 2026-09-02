@@ -40,6 +40,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@radix-ui/react-visually-hidden": "^1.2.4",
     "@react-pdf/renderer": "^4.3.2",
+    "@stripe/stripe-js": "^9.15.0",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
     "@tabler/icons-react": "^3.37.1",
@@ -64,6 +65,7 @@
     "react-resizable-panels": "^4.2.0",
     "recharts": "2.15.4",
     "sonner": "^2.0.7",
+    "stripe": "^22.6.1",
     "tailwind-merge": "^3.3.0",
     "vaul": "^1.1.2",
     "zod": "^4.3.5"
