@@ -14,8 +14,8 @@ export function BillingPortalButton() {
       setLoading(true);
       const { url } = await createCustomerPortalSession();
       window.location.href = url;
-    } catch (err: any) {
-      toast.error(err.message || "Failed to open billing portal");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to open billing portal");
       setLoading(false);
     }
   }

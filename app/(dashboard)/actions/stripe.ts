@@ -39,7 +39,7 @@ export async function createCheckoutSession(priceId: string) {
     });
 
     return { sessionId: session.id, url: session.url };
-  } catch (err: any) {
+  } catch (err) {
     console.error(err);
     throw new Error("Failed to create checkout session");
   }
@@ -69,7 +69,7 @@ export async function createCustomerPortalSession() {
     });
 
     return { url: portalSession.url };
-  } catch (err: any) {
+  } catch (err) {
     console.error(err);
     throw new Error("Failed to create customer portal session");
   }

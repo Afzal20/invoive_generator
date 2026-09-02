@@ -50,8 +50,8 @@ export async function POST(req: Request) {
         stripe_customer_id: subscription.customer as string,
         status: subscription.status,
         price_id: subscription.items.data[0].price.id,
-        current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-        current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+        current_period_start: new Date((subscription as unknown as Record<string, number>).current_period_start * 1000).toISOString(),
+        current_period_end: new Date((subscription as unknown as Record<string, number>).current_period_end * 1000).toISOString(),
         created_at: new Date(subscription.created * 1000).toISOString(),
       });
     }
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
   if (event.type === "invoice.payment_succeeded") {
     const invoice = event.data.object as Stripe.Invoice;
     const subscription = await stripe.subscriptions.retrieve(
-      invoice.subscription as string
+      (invoice as unknown as Record<string, string>).subscription
     );
 
     const { data: org } = await supabase
@@ -72,8 +72,8 @@ export async function POST(req: Request) {
     if (org) {
       await supabase.from("subscriptions").update({
         status: subscription.status,
-        current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-        current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+        current_period_start: new Date((subscription as unknown as Record<string, number>).current_period_start * 1000).toISOString(),
+        current_period_end: new Date((subscription as unknown as Record<string, number>).current_period_end * 1000).toISOString(),
       }).eq("stripe_subscription_id", subscription.id);
     }
   }
@@ -85,8 +85,8 @@ export async function POST(req: Request) {
       status: subscription.status,
       cancel_at_period_end: subscription.cancel_at_period_end,
       canceled_at: subscription.canceled_at ? new Date(subscription.canceled_at * 1000).toISOString() : null,
-      current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+      current_period_start: new Date((subscription as unknown as Record<string, number>).current_period_start * 1000).toISOString(),
+      current_period_end: new Date((subscription as unknown as Record<string, number>).current_period_end * 1000).toISOString(),
     }).eq("stripe_subscription_id", subscription.id);
   }
 

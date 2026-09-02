@@ -13,9 +13,9 @@ export function UpgradeButton({ priceId }: { priceId: string }) {
     try {
       setLoading(true);
       const { url } = await createCheckoutSession(priceId);
-      window.location.href = url;
-    } catch (err: any) {
-      toast.error(err.message || "Failed to start checkout");
+      window.location.href = url || "";
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to start checkout");
       setLoading(false);
     }
   }

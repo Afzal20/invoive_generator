@@ -308,7 +308,7 @@ export function ClientsTable({ clients }: { clients: ClientWithStats[] }) {
             <DialogHeader>
               <DialogTitle>Edit Client</DialogTitle>
               <DialogDescription>
-                Update the client's information.
+                Update the client&apos;s information.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4 md:grid-cols-2">
