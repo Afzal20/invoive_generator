@@ -37,6 +37,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { Product } from "@/lib/erp/types"
 import { formatCurrency } from "@/lib/erp/format"
@@ -50,6 +59,7 @@ export function InventoryTable({ products }: { products: Product[] }) {
   const [search, setSearch] = React.useState("")
   const [pendingId, setPendingId] = React.useState<string | null>(null)
   const [deleteId, setDeleteId] = React.useState<string | null>(null)
+  const [editProduct, setEditProduct] = React.useState<Product | null>(null)
 
   const filtered = products.filter(
     (p) =>
@@ -271,6 +281,9 @@ export function InventoryTable({ products }: { products: Product[] }) {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => setEditProduct(product)}>
+                                    Edit Product
+                                  </DropdownMenuItem>
                                   <DropdownMenuItem
                                     onClick={() =>
                                       toggleProductActive(product.id, !product.is_active)
@@ -322,6 +335,108 @@ export function InventoryTable({ products }: { products: Product[] }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!editProduct} onOpenChange={(open) => !open && setEditProduct(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <form
+            action={async (fd) => {
+              const { updateProductAction } = await import("@/app/(dashboard)/actions")
+              await updateProductAction(fd)
+              setEditProduct(null)
+            }}
+          >
+            <input type="hidden" name="id" value={editProduct?.id || ""} />
+            <DialogHeader>
+              <DialogTitle>Edit Product</DialogTitle>
+              <DialogDescription>Update product details and inventory settings.</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-prod-name">Name *</Label>
+                  <Input id="edit-prod-name" name="name" required defaultValue={editProduct?.name} />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-prod-sku">SKU</Label>
+                  <Input id="edit-prod-sku" name="sku" defaultValue={editProduct?.sku || ""} />
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-prod-desc">Description</Label>
+                <Input id="edit-prod-desc" name="description" defaultValue={editProduct?.description || ""} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-prod-price">Unit Price *</Label>
+                  <Input
+                    id="edit-prod-price"
+                    name="unit_price"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    required
+                    defaultValue={editProduct?.unit_price?.toString()}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-prod-currency">Currency</Label>
+                  <Input id="edit-prod-currency" name="currency" defaultValue={editProduct?.currency || "USD"} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-prod-category">Category</Label>
+                  <Input id="edit-prod-category" name="category" defaultValue={editProduct?.category || ""} />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-prod-unit">Unit</Label>
+                  <Input id="edit-prod-unit" name="unit" defaultValue={editProduct?.unit || "item"} />
+                </div>
+              </div>
+              <div className="space-y-4 rounded-lg border p-4 bg-muted/50">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="edit-prod-track"
+                    name="track_stock"
+                    className="size-4"
+                    defaultChecked={editProduct?.track_stock}
+                  />
+                  <Label htmlFor="edit-prod-track">Track Inventory</Label>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-prod-stock">Current Stock</Label>
+                    <Input
+                      id="edit-prod-stock"
+                      name="stock_quantity"
+                      type="number"
+                      min="0"
+                      defaultValue={editProduct?.stock_quantity?.toString() || "0"}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-prod-low">Low Stock Alert at</Label>
+                    <Input
+                      id="edit-prod-low"
+                      name="low_stock_threshold"
+                      type="number"
+                      min="0"
+                      defaultValue={editProduct?.low_stock_threshold?.toString() || "5"}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setEditProduct(null)}>
+                Cancel
+              </Button>
+              <Button type="submit">Save Changes</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

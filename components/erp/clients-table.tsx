@@ -20,6 +20,15 @@ import {
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import {
   Table,
   TableBody,
   TableCell,
@@ -52,6 +61,7 @@ export function ClientsTable({ clients }: { clients: ClientWithStats[] }) {
   const [search, setSearch] = React.useState("")
   const [pendingId, setPendingId] = React.useState<string | null>(null)
   const [deleteId, setDeleteId] = React.useState<string | null>(null)
+  const [editClient, setEditClient] = React.useState<ClientWithStats | null>(null)
 
   const filtered = clients.filter(
     (c) =>
@@ -232,6 +242,9 @@ export function ClientsTable({ clients }: { clients: ClientWithStats[] }) {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => setEditClient(client)}>
+                                    Edit Client
+                                  </DropdownMenuItem>
                                   <DropdownMenuItem asChild>
                                     <Link href={`/create-invoice?client=${client.id}`}>
                                       Create Invoice
@@ -281,6 +294,54 @@ export function ClientsTable({ clients }: { clients: ClientWithStats[] }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!editClient} onOpenChange={(open) => !open && setEditClient(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <form
+            action={async (fd) => {
+              const { updateClient } = await import("@/app/(dashboard)/actions")
+              await updateClient(fd)
+              setEditClient(null)
+            }}
+          >
+            <input type="hidden" name="client_id" value={editClient?.id || ""} />
+            <DialogHeader>
+              <DialogTitle>Edit Client</DialogTitle>
+              <DialogDescription>
+                Update the client's information.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4 md:grid-cols-2">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-name">Client name *</Label>
+                <Input id="edit-name" name="name" required defaultValue={editClient?.name} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-company">Company</Label>
+                <Input id="edit-company" name="company" defaultValue={editClient?.company ?? ""} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-email">Email *</Label>
+                <Input id="edit-email" name="email" type="email" required defaultValue={editClient?.email} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-phone">Phone</Label>
+                <Input id="edit-phone" name="phone" defaultValue={editClient?.phone ?? ""} />
+              </div>
+              <div className="grid gap-2 md:col-span-2">
+                <Label htmlFor="edit-address">Address</Label>
+                <Input id="edit-address" name="address" defaultValue={editClient?.address ?? ""} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setEditClient(null)}>
+                Cancel
+              </Button>
+              <Button type="submit">Save Changes</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

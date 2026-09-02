@@ -65,6 +65,7 @@ export function ExpensesView({ expenses }: { expenses: Expense[] }) {
   const [open, setOpen] = React.useState(false)
   const [pendingId, setPendingId] = React.useState<string | null>(null)
   const [deleteId, setDeleteId] = React.useState<string | null>(null)
+  const [editExpense, setEditExpense] = React.useState<Expense | null>(null)
 
   const filtered = expenses.filter((e) => {
     const matchesSearch =
@@ -312,6 +313,9 @@ export function ExpensesView({ expenses }: { expenses: Expense[] }) {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setEditExpense(expense)}>
+                              Edit Expense
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => setDeleteId(expense.id)}
                               className="text-destructive"
@@ -353,6 +357,107 @@ export function ExpensesView({ expenses }: { expenses: Expense[] }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!editExpense} onOpenChange={(open) => !open && setEditExpense(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <form
+            action={async (fd) => {
+              const { updateExpense } = await import("@/app/(dashboard)/actions")
+              await updateExpense(fd)
+              setEditExpense(null)
+            }}
+          >
+            <input type="hidden" name="id" value={editExpense?.id || ""} />
+            <DialogHeader>
+              <DialogTitle>Edit Expense</DialogTitle>
+              <DialogDescription>
+                Update your business expense record.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-2">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-exp-title">Title *</Label>
+                <Input id="edit-exp-title" name="title" required defaultValue={editExpense?.title} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-exp-category">Category</Label>
+                  <Select name="category" defaultValue={editExpense?.category || "other"}>
+                    <SelectTrigger id="edit-exp-category">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EXPENSE_CATEGORIES.map((c) => (
+                        <SelectItem key={c.value} value={c.value}>
+                          {c.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-exp-vendor">Vendor</Label>
+                  <Input id="edit-exp-vendor" name="vendor" defaultValue={editExpense?.vendor || ""} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-exp-amount">Amount *</Label>
+                  <Input
+                    id="edit-exp-amount"
+                    name="amount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    required
+                    defaultValue={editExpense?.amount?.toString()}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-exp-date">Date</Label>
+                  <Input
+                    id="edit-exp-date"
+                    name="expense_date"
+                    type="date"
+                    defaultValue={editExpense?.expense_date?.slice(0, 10)}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-exp-method">Payment method</Label>
+                  <Select name="payment_method" defaultValue={editExpense?.payment_method || "cash"}>
+                    <SelectTrigger id="edit-exp-method">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PAYMENT_METHODS.map((m) => (
+                        <SelectItem key={m.value} value={m.value}>
+                          {m.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-exp-currency">Currency</Label>
+                  <Input id="edit-exp-currency" name="currency" defaultValue={editExpense?.currency || "USD"} />
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-exp-notes">Notes</Label>
+                <Textarea id="edit-exp-notes" name="notes" defaultValue={editExpense?.notes || ""} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setEditExpense(null)}>
+                Cancel
+              </Button>
+              <Button type="submit">Save Changes</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

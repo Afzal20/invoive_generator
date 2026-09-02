@@ -160,6 +160,34 @@ export async function createExpense(formData: FormData) {
   revalidatePath("/reports");
 }
 
+export async function updateExpense(formData: FormData) {
+  const ctx = await requireRole("editor");
+  const supabase = await createClient();
+
+  const id = str(formData, "id");
+  const title = str(formData, "title");
+  if (!id || !title) return;
+
+  await supabase
+    .from("expenses")
+    .update({
+      title,
+      category: str(formData, "category", "other"),
+      vendor: str(formData, "vendor"),
+      amount: num(formData, "amount"),
+      currency: str(formData, "currency", "USD"),
+      expense_date: str(formData, "expense_date", new Date().toISOString().slice(0, 10)),
+      payment_method: (str(formData, "payment_method", "cash") || "cash") as PaymentMethod,
+      notes: str(formData, "notes"),
+    })
+    .eq("id", id)
+    .eq("organization_id", ctx.org.id);
+
+  revalidatePath("/expenses");
+  revalidatePath("/dashboard");
+  revalidatePath("/reports");
+}
+
 export async function deleteExpense(id: string) {
   await requireRole("editor");
   const supabase = await createClient();
@@ -567,6 +595,36 @@ export async function toggleProductActive(productId: string, isActive: boolean) 
     .update({ is_active: isActive })
     .eq("id", productId);
   revalidatePath("/products");
+  revalidatePath("/dashboard");
+}
+
+export async function updateProductAction(formData: FormData) {
+  const ctx = await requireRole("editor");
+  const supabase = await createClient();
+
+  const id = str(formData, "id");
+  const name = str(formData, "name");
+  if (!id || !name) return;
+
+  await supabase
+    .from("products")
+    .update({
+      name,
+      description: str(formData, "description"),
+      unit_price: num(formData, "unit_price"),
+      currency: str(formData, "currency", "USD"),
+      category: str(formData, "category"),
+      unit: str(formData, "unit", "item"),
+      sku: str(formData, "sku"),
+      stock_quantity: Math.trunc(num(formData, "stock_quantity")),
+      low_stock_threshold: Math.trunc(num(formData, "low_stock_threshold", 5)),
+      track_stock: formData.get("track_stock") === "on",
+    })
+    .eq("id", id)
+    .eq("organization_id", ctx.org.id);
+
+  revalidatePath("/products");
+  revalidatePath("/dashboard");
 }
 
 export async function deleteProduct(productId: string) {
