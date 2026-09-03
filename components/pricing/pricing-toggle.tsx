@@ -215,8 +215,8 @@ export function PricingToggle() {
                 variant={plan.highlighted ? "default" : "outline"}
                 asChild
               >
-                <Link href="/create">
-                  {plan.price === 0 ? "Get Started" : "Start Free Trial"}
+                <Link href={plan.price === 0 ? "/create" : "/settings/billing"}>
+                  {plan.price === 0 ? "Get Started" : "Upgrade to Pro"}
                 </Link>
               </Button>
             </CardFooter>
