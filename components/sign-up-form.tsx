@@ -78,12 +78,24 @@ export function SignUpForm({
     }
   };
 
-  const handleGoogleSignUp = () => {
+  const handleGoogleSignUp = async () => {
     setIsLoading(true);
     setError(null);
-    const clientId =
-      process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
-      "572994709476-63fcnvi3fesnjcnktnqlq81aes2hncjo.apps.googleusercontent.com";
+    let clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      try {
+        const res = await fetch("/api/auth/google");
+        const data = await res.json();
+        if (data.client_id) {
+          clientId = data.client_id;
+        }
+      } catch {
+        // fallback
+      }
+    }
+    if (!clientId) {
+      clientId = "264361429871-d434kiurui3f08nkc80m7o9vvcn40gc3.apps.googleusercontent.com";
+    }
     const redirectUri = `${window.location.origin}/auth/callback`;
     const scope = encodeURIComponent("openid email profile");
     const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(

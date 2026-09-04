@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { getApiBaseUrl } from "@/lib/api/client";
 
 export async function GET() {
-  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+  const clientId =
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+    process.env.GOOGLE_CLIENT_ID ||
+    "264361429871-d434kiurui3f08nkc80m7o9vvcn40gc3.apps.googleusercontent.com";
   return NextResponse.json({ client_id: clientId });
 }
 
