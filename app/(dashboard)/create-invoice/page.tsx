@@ -1,5 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
 import { requireOrg } from "@/lib/erp/org";
+import { getClientsWithStats, getProducts, getProfile } from "@/lib/erp/queries";
 import {
   CreateInvoiceForm,
 } from "@/components/erp/create-invoice-form";
@@ -10,23 +10,17 @@ export default async function CreateInvoicePage({
 }: {
   searchParams: Promise<{ client?: string }>;
 }) {
-  const supabase = await createClient();
-  const { org, member } = await requireOrg();
+  const { org } = await requireOrg();
   const params = await searchParams;
 
-  const [{ data: clients }, { data: products }, { data: profile }, { count }] =
-    await Promise.all([
-      supabase.from("clients").select("*").eq("organization_id", org.id).order("name"),
-      supabase.from("products").select("*").eq("organization_id", org.id).order("name"),
-      supabase.from("profiles").select("*").eq("id", member.user_id ?? "").maybeSingle(),
-      supabase
-        .from("invoices")
-        .select("id", { count: "exact", head: true })
-        .eq("organization_id", org.id),
-    ]);
+  const [clients, products, profile] = await Promise.all([
+    getClientsWithStats(org.id),
+    getProducts(org.id),
+    getProfile(),
+  ]);
 
   const year = new Date().getFullYear();
-  const suggestedNumber = `INV-${year}-${String((count ?? 0) + 1).padStart(3, "0")}`;
+  const suggestedNumber = `INV-${year}-${Date.now().toString().slice(-4)}`;
 
   return (
     <div className="flex flex-1 flex-col">

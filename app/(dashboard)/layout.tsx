@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
+import { authApi } from "@/lib/api/client";
 import {
   claimPendingInvites,
   getMemberships,
@@ -28,16 +28,18 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 }
 
 async function DashboardGuard({ children }: DashboardLayoutProps) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user = null;
+  try {
+    user = await authApi.getMe();
+  } catch {
+    // Unauthenticated
+  }
 
   if (!user) {
     redirect("/auth/login");
   }
 
-  // Accept any team invites pending for this email (full SaaS loop)
+  // Accept any team invites pending for this email
   await claimPendingInvites(user.email ?? "", user.id);
 
   const [memberships, cookieStore] = await Promise.all([

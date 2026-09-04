@@ -1,5 +1,5 @@
 import { requireOrg } from "@/lib/erp/org";
-import { createClient } from "@/lib/supabase/server";
+import { billingApi } from "@/lib/api/client";
 import { BillingPortalButton } from "@/components/erp/billing-portal-button";
 import { UpgradeButton } from "@/components/erp/upgrade-button";
 import { syncCheckoutSession } from "@/app/(dashboard)/actions/stripe";
@@ -26,16 +26,15 @@ export default async function BillingSettingsPage({ searchParams }: BillingPageP
     }
   }
 
-  const supabase = await createClient();
+  let subscription = null;
+  try {
+    subscription = await billingApi.getSubscription(org.id);
+  } catch {
+    subscription = null;
+  }
 
-  const { data: subscription } = await supabase
-    .from("subscriptions")
-    .select("*")
-    .eq("organization_id", org.id)
-    .single();
-
-  const isPro = subscription && subscription.status === "active";
-  const proPriceId = process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID || "price_1UBHQXLoTyOsviCM13Zaocz1";
+  const isPro = subscription && subscription.plan === "pro" && subscription.status === "active";
+  const proPriceId = process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID || "pro";
 
   return (
     <div className="flex flex-col gap-6 p-6 max-w-4xl">
@@ -109,7 +108,7 @@ export default async function BillingSettingsPage({ searchParams }: BillingPageP
                 {subscription.cancel_at_period_end ? (
                   <p className="text-xs text-destructive">
                     Your subscription will end on{" "}
-                    {format(new Date(subscription.current_period_end), "PPP")}. You can renew anytime from the billing portal.
+                    {subscription.current_period_end ? format(new Date(subscription.current_period_end), "PPP") : "the end of the period"}. You can renew anytime from the billing portal.
                   </p>
                 ) : (
                   <p className="text-xs text-muted-foreground">

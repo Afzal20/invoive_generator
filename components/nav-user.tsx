@@ -30,25 +30,23 @@ import {
 } from "@/components/ui/sidebar"
 
 import { LogoutButton } from "@/components/logout-button"
-import { createClient } from "@/lib/supabase/client"
 
 export function NavUser() {
   const { isMobile } = useSidebar()
   const [user, setUser] = useState<{ email: string; name: string; avatar: string } | null>(null)
 
   useEffect(() => {
-    const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        const email = data.user.email ?? ""
-        const name =
-          data.user.user_metadata?.full_name ??
-          data.user.user_metadata?.name ??
-          email.split("@")[0]
-        const avatar = data.user.user_metadata?.avatar_url ?? ""
-        setUser({ email, name, avatar })
-      }
-    })
+    fetch("/api/auth/me")
+      .then((res) => (res.ok ? res.json() : { user: null }))
+      .then((data) => {
+        if (data.user) {
+          const email = data.user.email ?? ""
+          const name = data.user.name || email.split("@")[0]
+          const avatar = data.user.avatar_url ?? ""
+          setUser({ email, name, avatar })
+        }
+      })
+      .catch(() => {})
   }, [])
 
   const displayName = user?.name ?? "User"

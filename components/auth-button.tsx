@@ -1,14 +1,15 @@
-import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 export async function AuthButton() {
-  const supabase = await createClient();
+  const cookieStore = await cookies();
+  const token =
+    cookieStore.get("bp_access_token")?.value ||
+    cookieStore.get("bp_refresh_token")?.value;
 
-  // getUser() will be slower.
-  const { data } = await supabase.auth.getUser();
-  const user = data?.user;
-
-  if (user) {
+  if (token) {
     return redirect("/dashboard");
   }
+
+  return null;
 }

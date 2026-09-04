@@ -2,7 +2,7 @@ import "server-only";
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { orgsApi, authApi } from "@/lib/api/client";
 import type { Organization, TeamMember, TeamRole } from "./types";
 
 export const ACTIVE_ORG_COOKIE = "bp_active_org";
@@ -24,22 +24,38 @@ export interface OrgContext {
   member: TeamMember;
 }
 
-interface MemberRow extends TeamMember {
-  org: Organization | null;
-}
-
 /** All active organizations the signed-in user belongs to. */
 export async function getMemberships(): Promise<OrgContext[]> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("team_members")
-    .select("*, org:organizations(*)")
-    .eq("status", "active")
-    .order("created_at", { ascending: true });
+  try {
+    const orgs = await orgsApi.list();
+    if (!orgs || orgs.length === 0) return [];
 
-  return ((data as MemberRow[]) ?? [])
-    .filter((m) => m.org)
-    .map((m) => ({ org: m.org as Organization, member: m }));
+    const user = await authApi.getMe().catch(() => null);
+
+    const list: OrgContext[] = [];
+    for (const org of orgs) {
+      const ownerId = String(org.owner_id || (org as unknown as { owner: string }).owner || "");
+      const isOwner = Boolean(user && ownerId && String(user.id) === ownerId);
+      const role: TeamRole = isOwner ? "owner" : "admin";
+      const member: TeamMember = {
+        id: `mem-${org.id}`,
+        organization_id: org.id,
+        user_id: user?.id ?? null,
+        email: user?.email ?? "",
+        name: user?.name ?? "",
+        role,
+        department: "",
+        status: "active",
+        invited_at: null,
+        joined_at: null,
+        created_at: org.created_at,
+      };
+      list.push({ org, member });
+    }
+    return list;
+  } catch {
+    return [];
+  }
 }
 
 /**
@@ -64,7 +80,7 @@ export async function requireOrg(): Promise<OrgContext> {
   return ctx;
 }
 
-/** For mutations — enforces a minimum role at the application layer (RLS backstops). */
+/** For mutations — enforces a minimum role at the application layer. */
 export async function requireRole(min: TeamRole): Promise<OrgContext> {
   const ctx = await getActiveOrg();
   if (!ctx) throw new Error("You don't belong to any organization.");
@@ -75,28 +91,15 @@ export async function requireRole(min: TeamRole): Promise<OrgContext> {
   return ctx;
 }
 
-/**
- * Claim pending invites matching this user's email.
- * Called right after login so invited users land inside the org that invited them.
- * RLS restricts the update to rows where email matches the JWT and status is pending.
- */
+/** Claim pending invites matching this user's email. */
 export async function claimPendingInvites(
   email: string,
   userId: string,
 ): Promise<number> {
-  if (!email) return 0;
-  const normalized = email.toLowerCase();
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("team_members")
-    .update({
-      user_id: userId,
-      status: "active",
-      joined_at: new Date().toISOString(),
-    })
-    .eq("email", normalized)
-    .eq("status", "pending")
-    .is("user_id", null)
-    .select("id");
-  return data?.length ?? 0;
+  try {
+    const res = await authApi.claimPendingInvites();
+    return res.claimed;
+  } catch {
+    return 0;
+  }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/client";
+import { authApi } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -48,20 +48,15 @@ export function UpdatePasswordForm({
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    const supabase = createClient();
-    setIsLoading(true);
-    setError(null);
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) throw error;
-      router.push("/dashboard");
+      // If reset token query params present, call confirm reset
+      const params = new URLSearchParams(window.location.search);
+      const uid = params.get("uid");
+      const token = params.get("token");
+      if (uid && token) {
+        await authApi.confirmPasswordReset({ uid, token, password });
+      }
+      router.push("/auth/login");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
