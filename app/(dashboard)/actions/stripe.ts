@@ -30,8 +30,17 @@ async function getFrontendBaseUrl(): Promise<string> {
 
 function resolvePriceId(priceId?: string): string {
   const trimmed = priceId?.trim();
+  const defaultProMonthly =
+    process.env.NEXT_PUBLIC_STRIPE_PRO_MONTHLY_PRICE_ID ||
+    process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID ||
+    "price_1UBHQXLoTyOsviCM13Zaocz1";
+  const defaultProYearly =
+    process.env.NEXT_PUBLIC_STRIPE_PRO_YEARLY_PRICE_ID ||
+    process.env.STRIPE_PRO_YEARLY_PRICE_ID ||
+    "price_1UBHQeLoTyOsviCMGed4mMyp";
+
   if (!trimmed) {
-    return process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID || "";
+    return defaultProMonthly;
   }
 
   if (trimmed.startsWith("price_")) {
@@ -41,7 +50,13 @@ function resolvePriceId(priceId?: string): string {
   const mapping: Record<string, string | undefined> = {
     free: process.env.NEXT_PUBLIC_STRIPE_FREE_PRICE_ID,
     starter: process.env.NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID,
-    pro: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID,
+    pro: defaultProMonthly,
+    monthly: defaultProMonthly,
+    pro_monthly: defaultProMonthly,
+    yearly: defaultProYearly,
+    annual: defaultProYearly,
+    pro_yearly: defaultProYearly,
+    pro_annual: defaultProYearly,
     enterprise: process.env.NEXT_PUBLIC_STRIPE_ENTERPRISE_PRICE_ID,
   };
 

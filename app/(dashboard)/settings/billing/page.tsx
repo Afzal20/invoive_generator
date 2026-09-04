@@ -3,6 +3,7 @@ import { billingApi } from "@/lib/api/client";
 import { BillingPortalButton } from "@/components/erp/billing-portal-button";
 import { UpgradeButton } from "@/components/erp/upgrade-button";
 import { syncCheckoutSession } from "@/app/(dashboard)/actions/stripe";
+import { PricingCardSection } from "@/components/pricing/pricing-card-section";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { CheckCircle2, AlertCircle, Sparkles, Check } from "lucide-react";
@@ -146,11 +147,18 @@ export default async function BillingSettingsPage({ searchParams }: BillingPageP
           <div className="pt-4 border-t flex flex-wrap gap-4 items-center">
             {isPro ? (
               <BillingPortalButton />
-            ) : (
-              <UpgradeButton priceId={proPriceId} />
-            )}
+            ) : null}
           </div>
         </div>
+      </div>
+
+      {/* Pricing Cards Section matching the requested 3-card design */}
+      <div className="mt-2">
+        <PricingCardSection
+          inDashboard={true}
+          currentPlan={isPro ? "pro" : "free"}
+          isSubscribed={Boolean(isPro)}
+        />
       </div>
     </div>
   );
