@@ -11,9 +11,11 @@ A mini ERP for small businesses built with Next.js and Supabase. Send profession
 - **Products & Inventory**: Product catalog with SKU, stock tracking, and low-stock alerts.
 - **Expenses**: Categorize spending and see net profit at a glance.
 - **Reports**: Revenue vs. expenses over time, expense breakdowns by category, top clients.
-- **Team**: Invite members with admin/editor/viewer roles.
-- **Authentication**: Secure email + Google OAuth authentication via Supabase.
-- **PDF Generation**: Generate downloadable PDF invoices on the fly.
+- **Team & RBAC**: Invite members with granular role-based permissions (owner, admin, editor, viewer).
+- **Billing & Subscriptions**: Tiered subscription plans (Free, Starter, Pro, Enterprise) powered by Stripe with automated entitlement enforcement.
+- **Transactional Emails & PDF**: Async Celery email dispatch for invoice delivery with PDF attachments, payment receipts, team invites, and password resets.
+- **Authentication**: Secure email + Google OAuth authentication with Django JWT and dual-session support.
+- **PDF Generation**: Server-side ReportLab and client-side PDF invoice generation.
 - **Responsive Design**: Clean and dynamic interface built with Tailwind CSS and Radix UI.
 
 ## Screenshots
@@ -29,11 +31,13 @@ A mini ERP for small businesses built with Next.js and Supabase. Send profession
 
 ## Tech Stack
 
-- **Framework**: Next.js 15 (App Router)
+- **Framework**: Next.js 16.1.1 (React 19, App Router)
+- **Backend API**: Django 6 / Django REST Framework with SimpleJWT, Celery, and Redis
+- **Billing**: Stripe (Checkout, Customer Portal, Webhooks)
 - **Styling**: Tailwind CSS v4, Radix UI, Framer Motion
-- **Database & Auth**: Supabase
+- **Database & Auth**: PostgreSQL / Django ORM + Supabase compatibility
 - **Forms**: React Hook Form with Zod validation
-- **PDF Generation**: `@react-pdf/renderer`
+- **PDF Generation**: ReportLab / `@react-pdf/renderer`
 
 ## Running Locally
 
