@@ -185,6 +185,21 @@ export const authApi = {
     });
   },
 
+  async googleAuth(data: {
+    code?: string;
+    redirect_uri?: string;
+    id_token?: string;
+  }): Promise<AuthResponse> {
+    return apiClient<AuthResponse>("/auth/google/", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  async getGoogleConfig(): Promise<{ client_id: string }> {
+    return apiClient<{ client_id: string }>("/auth/google/");
+  },
+
   async logout(refreshToken?: string): Promise<{ detail: string }> {
     const refresh = refreshToken || (await getRefreshToken());
     return apiClient<{ detail: string }>("/auth/logout/", {

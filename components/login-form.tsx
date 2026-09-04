@@ -37,6 +37,16 @@ export function LoginForm({
     }
   }, [showPassword]);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const errorParam = params.get("error");
+      if (errorParam) {
+        setError(decodeURIComponent(errorParam));
+      }
+    }
+  }, []);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -61,8 +71,18 @@ export function LoginForm({
     }
   };
 
-  const handleGoogleLogin = async () => {
-    setError("Google login will be available soon. Please use email and password.");
+  const handleGoogleLogin = () => {
+    setIsLoading(true);
+    setError(null);
+    const clientId =
+      process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+      "572994709476-63fcnvi3fesnjcnktnqlq81aes2hncjo.apps.googleusercontent.com";
+    const redirectUri = `${window.location.origin}/auth/callback`;
+    const scope = encodeURIComponent("openid email profile");
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(
+      redirectUri,
+    )}&response_type=code&scope=${scope}&access_type=offline&prompt=select_account`;
+    window.location.href = googleAuthUrl;
   };
 
   return (
