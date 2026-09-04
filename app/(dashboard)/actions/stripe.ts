@@ -54,10 +54,11 @@ export async function createCheckoutSession(priceId?: string) {
     const baseUrl = await getFrontendBaseUrl();
     const session = await billingApi.createCheckoutSession(org.id, {
       priceId: resolvePriceId(priceId),
-      successUrl: `${baseUrl}/settings?billing=success`,
-      cancelUrl: `${baseUrl}/settings?billing=cancel`,
+      successUrl: `${baseUrl}/settings/billing?session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${baseUrl}/settings/billing?canceled=true`,
     });
-    return { sessionId: session.session_id, url: session.checkout_url };
+    const checkoutUrl = session.checkout_url || session.url || "";
+    return { sessionId: session.session_id, url: checkoutUrl };
   } catch (err) {
     console.error("Billing Checkout Error:", err);
     throw new Error(
@@ -69,8 +70,13 @@ export async function createCheckoutSession(priceId?: string) {
 export async function createCustomerPortalSession() {
   const { org } = await requireOrg();
   try {
-    const portalSession = await billingApi.createCustomerPortalSession(org.id, `${await getFrontendBaseUrl()}/settings`);
-    return { url: portalSession.portal_url };
+    const baseUrl = await getFrontendBaseUrl();
+    const portalSession = await billingApi.createCustomerPortalSession(
+      org.id,
+      `${baseUrl}/settings/billing`,
+    );
+    const portalUrl = portalSession.portal_url || portalSession.url || "";
+    return { url: portalUrl };
   } catch (err) {
     console.error("Billing Customer Portal Error:", err);
     throw new Error(
@@ -83,5 +89,15 @@ export async function syncCheckoutSession(sessionId: string) {
   if (!sessionId) {
     return { success: false, error: "Missing session ID" };
   }
-  return { success: true };
+  try {
+    const { org } = await requireOrg();
+    await billingApi.syncCheckoutSession(org.id, sessionId);
+    return { success: true };
+  } catch (err) {
+    console.error("Billing sync checkout error:", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to sync checkout session",
+    };
+  }
 }

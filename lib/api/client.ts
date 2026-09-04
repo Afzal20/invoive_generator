@@ -475,22 +475,55 @@ export const billingApi = {
   async createCheckoutSession(
     orgId: string,
     data: { priceId: string; successUrl: string; cancelUrl: string },
-  ): Promise<{ checkout_url: string; session_id: string }> {
-    return apiClient<{ checkout_url: string; session_id: string }>(`/orgs/${orgId}/billing/checkout/`, {
-      method: "POST",
-      body: JSON.stringify({
-        price_id: data.priceId,
-        success_url: data.successUrl,
-        cancel_url: data.cancelUrl,
-      }),
-    });
+  ): Promise<{ checkout_url: string; session_id: string; url?: string }> {
+    const res = await apiClient<{ checkout_url?: string; session_id: string; url?: string }>(
+      `/orgs/${orgId}/billing/checkout/`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          price_id: data.priceId,
+          success_url: data.successUrl,
+          cancel_url: data.cancelUrl,
+        }),
+      },
+    );
+    const resolvedUrl = res.checkout_url || res.url || "";
+    return {
+      session_id: res.session_id,
+      checkout_url: resolvedUrl,
+      url: resolvedUrl,
+    };
   },
 
-  async createCustomerPortalSession(orgId: string, returnUrl: string): Promise<{ portal_url: string }> {
-    return apiClient<{ portal_url: string }>(`/orgs/${orgId}/billing/portal/`, {
-      method: "POST",
-      body: JSON.stringify({ return_url: returnUrl }),
-    });
+  async createCustomerPortalSession(
+    orgId: string,
+    returnUrl: string,
+  ): Promise<{ portal_url: string; url?: string }> {
+    const res = await apiClient<{ portal_url?: string; url?: string }>(
+      `/orgs/${orgId}/billing/portal/`,
+      {
+        method: "POST",
+        body: JSON.stringify({ return_url: returnUrl }),
+      },
+    );
+    const resolvedUrl = res.portal_url || res.url || "";
+    return {
+      portal_url: resolvedUrl,
+      url: resolvedUrl,
+    };
+  },
+
+  async syncCheckoutSession(
+    orgId: string,
+    sessionId: string,
+  ): Promise<{ status: string; plan?: string }> {
+    return apiClient<{ status: string; plan?: string }>(
+      `/orgs/${orgId}/billing/sync-checkout/`,
+      {
+        method: "POST",
+        body: JSON.stringify({ session_id: sessionId }),
+      },
+    );
   },
 };
 
