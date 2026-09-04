@@ -194,11 +194,11 @@ export const authApi = {
   },
 
   async getMe(): Promise<User> {
-    return apiClient<User>("/auth/me/");
+    return apiClient<User>("/me/");
   },
 
   async getProfile(): Promise<Profile> {
-    return apiClient<Profile>("/profile/");
+    return apiClient<Profile>("/me/profile/");
   },
 
   async updateProfile(data: Partial<Profile>): Promise<Profile> {
@@ -223,7 +223,7 @@ export const authApi = {
   },
 
   async claimPendingInvites(): Promise<{ claimed: number }> {
-    return apiClient<{ claimed: number }>("/auth/claim-invites/", {
+    return apiClient<{ claimed: number }>("/auth/invites/claim/", {
       method: "POST",
     });
   },
@@ -270,18 +270,18 @@ export const orgsApi = {
 
   async inviteMember(
     orgId: string,
-    data: { email: string; role: string; name?: string; department?: string },
+    data: { email: string; role?: string; roleIds?: string[]; name?: string; department?: string },
   ): Promise<TeamMember> {
-    return apiClient<TeamMember>(`/orgs/${orgId}/members/invite/`, {
+    return apiClient<TeamMember>(`/orgs/${orgId}/invites/`, {
       method: "POST",
       body: JSON.stringify(data),
     });
   },
 
-  async updateMemberRole(orgId: string, memberId: string, role: string): Promise<TeamMember> {
-    return apiClient<TeamMember>(`/orgs/${orgId}/members/${memberId}/`, {
+  async updateMemberRole(orgId: string, memberId: string, role: string | string[]): Promise<TeamMember> {
+    return apiClient<TeamMember>(`/orgs/${orgId}/members/${memberId}/roles/`, {
       method: "PATCH",
-      body: JSON.stringify({ role }),
+      body: JSON.stringify(Array.isArray(role) ? { role_ids: role } : { role }),
     });
   },
 
@@ -292,7 +292,7 @@ export const orgsApi = {
   },
 
   async getMyPermissions(orgId: string): Promise<string[]> {
-    const res = await apiClient<{ permissions: string[] }>(`/orgs/${orgId}/my-permissions/`);
+    const res = await apiClient<{ permissions: string[] }>(`/orgs/me/permissions/?org=${encodeURIComponent(orgId)}`);
     return res.permissions;
   },
 };
@@ -433,7 +433,7 @@ export const erpApi = {
 
   // --- Dashboard & Reports ---
   async getDashboardStats(orgId: string): Promise<DashboardStats> {
-    return apiClient<DashboardStats>(`/orgs/${orgId}/dashboard-stats/`);
+    return apiClient<DashboardStats>(`/orgs/${orgId}/dashboard/stats/`);
   },
 
   async getReportData(orgId: string): Promise<ReportData> {
@@ -454,20 +454,27 @@ export const erpApi = {
 
 export const billingApi = {
   async getSubscription(orgId: string): Promise<Subscription> {
-    return apiClient<Subscription>(`/orgs/${orgId}/subscriptions/`);
+    return apiClient<Subscription>(`/orgs/${orgId}/subscription/`);
   },
 
-  async createCheckoutSession(orgId: string, plan: string): Promise<{ checkout_url: string; session_id: string }> {
-    return apiClient<{ checkout_url: string; session_id: string }>("/billing/checkout/", {
+  async createCheckoutSession(
+    orgId: string,
+    data: { priceId: string; successUrl: string; cancelUrl: string },
+  ): Promise<{ checkout_url: string; session_id: string }> {
+    return apiClient<{ checkout_url: string; session_id: string }>(`/orgs/${orgId}/billing/checkout/`, {
       method: "POST",
-      body: JSON.stringify({ organization_id: orgId, plan }),
+      body: JSON.stringify({
+        price_id: data.priceId,
+        success_url: data.successUrl,
+        cancel_url: data.cancelUrl,
+      }),
     });
   },
 
-  async createCustomerPortalSession(orgId: string): Promise<{ portal_url: string }> {
-    return apiClient<{ portal_url: string }>("/billing/portal/", {
+  async createCustomerPortalSession(orgId: string, returnUrl: string): Promise<{ portal_url: string }> {
+    return apiClient<{ portal_url: string }>(`/orgs/${orgId}/billing/portal/`, {
       method: "POST",
-      body: JSON.stringify({ organization_id: orgId }),
+      body: JSON.stringify({ return_url: returnUrl }),
     });
   },
 };
